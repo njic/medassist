@@ -1,11 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-
-    const appVersion = "v0.13.3";
-
-    document.querySelectorAll(".sidenav-version").forEach(element => {
-        element.textContent = appVersion;
-    });
-
     const medicationForm = document.getElementById('medicationForm');
     const emptyTitle = document.getElementById('empty-title');
     const overviewTitle = document.getElementById('overview-title');
@@ -1070,17 +1063,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const [hours, minutes] = (data.email_send_time || defaultSettings.email_send_time).split(':').map(num => num.padStart(2, '0'));
     
             // Fill the form with fetched data or default values
-            document.getElementById('username').value = data.username || defaultSettings.username;
+            document.getElementById('username').value = data.username ?? defaultSettings.username;
             document.getElementById('cron_enabled').checked = data.cron_enabled !== undefined ? data.cron_enabled : defaultSettings.cron_enabled;
-            document.getElementById('min_days_left').value = data.min_days_left || defaultSettings.min_days_left;
-            document.getElementById('email_send_time_hours').value = hours || 7; // Default to 7 if no value
-            document.getElementById('email_send_time_minutes').value = minutes || 0; // Default to 0 if no value
-            document.getElementById('email_delay_days').value = data.email_delay_days || defaultSettings.email_delay_days;
-            document.getElementById('smtp_host').value = data.smtp_host || defaultSettings.smtp_host;
-            document.getElementById('smtp_port').value = data.smtp_port || defaultSettings.smtp_port;
-            document.getElementById('smtp_user').value = data.smtp_user || defaultSettings.smtp_user;
+            document.getElementById('min_days_left').value = data.min_days_left ?? defaultSettings.min_days_left;
+            document.getElementById('email_send_time_hours').value = hours ?? 7; // Default to 7 if no value
+            document.getElementById('email_send_time_minutes').value = minutes ?? 0; // Default to 0 if no value
+            document.getElementById('email_delay_days').value = data.email_delay_days ?? defaultSettings.email_delay_days;
+            document.getElementById('smtp_host').value = data.smtp_host ?? defaultSettings.smtp_host;
+            document.getElementById('smtp_port').value = data.smtp_port ?? defaultSettings.smtp_port;
+            document.getElementById('smtp_user').value = data.smtp_user ?? defaultSettings.smtp_user;
             document.getElementById('smtp_pass').value = ''; // Keep password field empty for security
-            document.getElementById('recipient_email').value = data.recipient_email || defaultSettings.recipient_email;
+            document.getElementById('recipient_email').value = data.recipient_email ?? defaultSettings.recipient_email;            
         }
     
         // Update labels based on fetched data or default values
