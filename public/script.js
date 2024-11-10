@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-    const appVersion = "v0.12.3";
+    const appVersion = "v0.13.3";
 
     document.querySelectorAll(".sidenav-version").forEach(element => {
         element.textContent = appVersion;
