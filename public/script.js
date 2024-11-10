@@ -1033,7 +1033,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (settingsForm) {
         // Fetch SMTP settings from the backend
         function fetchSmtpSettings() {
-            fetch('/api/smtp-settings')
+            fetch('/api/all-settings')
                 .then(response => response.json())
                 .then(data => {
                     populateForm(data); // Populate the form with the fetched data
@@ -1063,7 +1063,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const [hours, minutes] = (data.email_send_time || defaultSettings.email_send_time).split(':').map(num => num.padStart(2, '0'));
     
             // Fill the form with fetched data or default values
-            document.getElementById('username').value = data.username ?? defaultSettings.username;
+            document.getElementById('username').value = data.username !== undefined ? data.username : defaultSettings.username;
             document.getElementById('cron_enabled').checked = data.cron_enabled !== undefined ? data.cron_enabled : defaultSettings.cron_enabled;
             document.getElementById('min_days_left').value = data.min_days_left ?? defaultSettings.min_days_left;
             document.getElementById('email_send_time_hours').value = hours ?? 7; // Default to 7 if no value

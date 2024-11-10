@@ -871,6 +871,20 @@ app.get('/api/smtp-settings', (req, res) => {
     });
 });
 
+// Fetch all settings
+app.get('/api/all-settings', (req, res) => {
+    db.get(`SELECT * FROM smtp`, [], (err, row) => {
+        if (err) {
+            console.error('Error fetching SMTP settings:', err.message);
+            return res.status(500).json({ error: 'Database error' });
+        }
+        
+        // If no settings exist, return an empty object
+        const settings = row || {};
+        res.json(settings);
+    });
+});
+
 // Start the server on port
 app.listen(3111, () => { 
     console.log('Server is running on http://localhost:3111');
