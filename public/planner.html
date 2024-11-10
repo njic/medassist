@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" href="/icons/favicon.svg" type="image/x-icon">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedAssist - Planner</title>
+    <link rel="stylesheet" href="/flatpickr/flatpickr.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="mySidenav" class="sidenav">
+        <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+        <a href="index.html" id="nav-home">
+            <img src="/icons/home.svg" alt="Home Icon" class="nav-icon"> Dashboard
+        </a>
+        <a href="config.html" id="nav-config">
+            <img src="/icons/config.svg" alt="Config Icon" class="nav-icon"> Config
+        </a>
+        <a href="planner.html" id="nav-planner">
+            <img src="/icons/planner.svg" alt="Planner Icon" class="nav-icon"> Planner
+        </a>
+        <a href="settings.html" id="nav-settings">
+            <img src="/icons/settings.svg" alt="Settings Icon" class="nav-icon"> Settings
+        </a>
+        <a href="https://github.com/njic/medassist/releases" target="_blank" class="logo-link">
+            <div class="logo-container">
+                <img src="/icons/logo-pills.svg" alt="Logo" class="sidenav-logo">
+                <span class="sidenav-title">MedAssist</span>
+                <span class="sidenav-version"></span>
+            </div>
+        </a>
+    </div>
+
+    <div class="header">
+        <div class="menu-icon" onclick="openNav()">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+        <a href="index.html" class="logo">MedAssist</a>
+    </div>
+
+    <h1 class="top-title">Planner</h1>
+
+    <div class="form-wrapper">
+        <h2>Select Date Range</h2>
+        <form id="plannerForm">
+            <div id="inlineCalendar"></div> <!-- Inline calendar container -->
+            <div class="date-row">
+                <div class="form-group startdate-input">
+                    <label for="startDate" class="input-top">Start Date:</label>
+                    <div class="input-wrapper">
+                        <div class="input-group">
+                            <label for="startDate" class="input-inside"><br></label>
+                            <input type="text" id="startDate" name="startDate" readonly tabindex="-1" style="pointer-events: none;" required>
+                        </div>
+                    </div>
+                    <label id="startLabel" class="input-bottom"><br></label>
+                </div>
+                <div class="form-group enddate-input">
+                    <label for="endDate" class="input-top">End Date:</label>
+                    <div class="input-wrapper">
+                        <div class="input-group">
+                            <label for="endDate" class="input-inside"><br></label>
+                            <input type="text" id="endDate" name="endDate" readonly tabindex="-1" style="pointer-events: none;" required>
+                        </div>
+                    </div>
+                    <label id="endLabel" class="input-bottom"><br></label>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="table-wrapper planner-result" style="display: none;">
+        <h2>Prepare these</h2>
+        <div id="plannerTableContainer"></div>
+        <button id="sendEmailBtn">Send by e-mail</button>
+    </div>
+    
+    <script src="/flatpickr/flatpickr.min.js"></script>
+    <script src="/script.js"></script>
+</body>
+</html>

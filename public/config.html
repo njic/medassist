@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" href="/icons/favicon.svg" type="image/x-icon">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedAssist - Config</title>
+    <link rel="stylesheet" href="/flatpickr/flatpickr.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="mySidenav" class="sidenav">
+        <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+        <a href="index.html" id="nav-home">
+            <img src="/icons/home.svg" alt="Home Icon" class="nav-icon"> Dashboard
+        </a>
+        <a href="config.html" id="nav-config">
+            <img src="/icons/config.svg" alt="Config Icon" class="nav-icon"> Config
+        </a>
+        <a href="planner.html" id="nav-planner">
+            <img src="/icons/planner.svg" alt="Planner Icon" class="nav-icon"> Planner
+        </a>
+        <a href="settings.html" id="nav-settings">
+            <img src="/icons/settings.svg" alt="Settings Icon" class="nav-icon"> Settings
+        </a>
+        <a href="https://github.com/njic/medassist/releases" target="_blank" class="logo-link">
+            <div class="logo-container">
+                <img src="/icons/logo-pills.svg" alt="Logo" class="sidenav-logo">
+                <span class="sidenav-title">MedAssist</span>
+                <span class="sidenav-version"></span>
+            </div>
+        </a>
+    </div>
+
+    <div class="header">
+        <div class="menu-icon" onclick="openNav()">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+        <a href="index.html" class="logo">MedAssist</a>
+    </div>
+
+    <h1 class="top-title">Config</h1>
+
+    <div class="form-wrapper">
+        <h2><span class="medication-heading-text">Add Medication</span>
+            <div class="info-button">
+                <span>i</span>
+                <div class="tooltip">Add a new medication (or update an existing one):<br>
+                    Set a unique medication name and the amount you currently have<br>
+                    You can create one or more schedules for the same medication<br>
+                    Usage: the amount to be used at a time<br>
+                    Every: how many days between each dose<br>
+                    Time: the time to take the medication<br>
+                    Start: when to begin taking it (this will be set automatically unless you want to postpone it)</div>
+            </div>
+        </h2>  
+        <form id="medicationForm" class="medication-form">
+            <input type="hidden" id="medicationId" name="medicationId" value="">
+            <div class="name-row">
+                <div class="form-group name-input">
+                    <label for="name" class="input-top">Name:</label>
+                    <div class="input-wrapper">
+                        <div class="input-group">
+                            <label for="name" class="input-inside">Medication Name (Unique)</label>
+                            <input type="text" id="name" name="name" required>
+                        </div>  
+                    </div>
+                    <label id="nameLabel" class="input-bottom"><br></label>
+                </div>
+                <div class="form-group count-input">
+                    <label for="count" class="input-top">Count:</label>
+                    <div class="input-wrapper">
+                        <div class="input-group">
+                            <label for="count" class="input-inside">Meds</label>
+                            <input type="number" step="0.01" max="999" id="count" name="count" required>
+                        </div>  
+                    </div>
+                    <label id="countLabel" class="input-bottom"><br></label>
+                </div>
+            </div>
+            <div id="scheduleContainer">
+                <!-- Dynamic schedules will be added here -->
+            </div>
+            <div class="schedule-actions">
+                <button type="button" id="addScheduleBtn">Add Schedule</button>
+            </div>
+            <button type="submit" class="submit-button">Save Medication</button>
+        </form>
+    </div>
+
+    <div class="table-wrapper">
+        <h2>Medication List</h2>
+        <div id="configTableContainer"></div>
+    </div>
+
+    <script src="/flatpickr/flatpickr.min.js"></script>
+    <script src="/script.js"></script>
+</body>
+</html>

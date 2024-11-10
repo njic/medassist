@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" href="/icons/favicon.svg" type="image/x-icon">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedAssist - Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="mySidenav" class="sidenav">
+        <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+        <a href="index.html" id="nav-home">
+            <img src="/icons/home.svg" alt="Home Icon" class="nav-icon"> Dashboard
+        </a>
+        <a href="config.html" id="nav-config">
+            <img src="/icons/config.svg" alt="Config Icon" class="nav-icon"> Config
+        </a>
+        <a href="planner.html" id="nav-planner">
+            <img src="/icons/planner.svg" alt="Planner Icon" class="nav-icon"> Planner
+        </a>
+        <a href="settings.html" id="nav-settings">
+            <img src="/icons/settings.svg" alt="Settings Icon" class="nav-icon"> Settings
+        </a>
+        <a href="https://github.com/njic/medassist/releases" target="_blank" class="logo-link">
+            <div class="logo-container">
+                <img src="/icons/logo-pills.svg" alt="Logo" class="sidenav-logo">
+                <span class="sidenav-title">MedAssist</span>
+                <span class="sidenav-version"></span>
+            </div>
+        </a>
+    </div>
+
+    <div class="header">
+        <div class="menu-icon" onclick="openNav()">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+        <a href="index.html" class="logo">MedAssist</a>
+    </div>
+
+    <h1 class="top-title">Dashboard</h1>
+
+    <div class="form-wrapper hidden">
+        <h2 id="reorder-title" class="hidden">Reorder Reminder</h2>
+        <form id="reorderForm" class="hidden"></form>
+    </div>
+
+    <div class="table-wrapper hidden">
+        <h2 id="overview-title" class="hidden">Medication Overview</h2>
+        <div id="overviewTable" class="hidden"></div>
+    </div>
+
+    <div class="table-wrapper hidden">
+        <h2 id="clock-title" class="hidden">Upcoming Schedules</h2>
+        <div id="clockTable" class="hidden"></div>
+    </div>
+
+    <div class="form-wrapper">
+        <h2 id="empty-title" style="display: none;">Your Inventory is empty, go to Config to Add Medication</h2>
+        <a href="config.html" id="goToConfigBtn" style="display: none;">Go to Config</a>
+    </div>
+
+    <script src="/script.js"></script>
+</body>
+</html>

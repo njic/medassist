@@ -1,0 +1,878 @@
+:root {
+  --text-color: #999;
+  --text-white: rgb(221, 221, 221);
+  --header-background: rgb(28, 78, 128);
+  --background-color: rgba(8, 10, 9, 0.925);
+  --today-color: rgb(39, 97, 39);
+  --table-background: rgb(32, 33, 34);
+  --table-header: rgb(35, 40, 46);
+  --first-column: rgb(41, 41, 43);
+  --table-hover: pink;
+  --table-border: 1px solid black;
+  --input-background: rgb(41, 46, 53);
+  --group-background: rgb(45, 51, 59);
+  --group-border: 1px solid rgb(45, 51, 59);
+  --med-top-half: #6675b4;
+  --med-bottom-half: #cca581;
+  --med-top-zero: rgb(238, 55, 55);
+  --med-bottom-zero: rgb(224, 179, 179);
+  --card-background: rgb(32, 33, 34);
+  --input-hover: rgb(60, 68, 80);
+  --light-border: 1px solid #fff;
+  --input-highlight: rgba(33, 39, 48, 0.452);
+  --submit-button: rgba(0, 48, 119, 0.349);
+  --submit-border: 1px solid rgba(2, 177, 162, 0.301);
+  --submit-hover: rgba(10, 106, 145, 0.377);
+  --clock-button: rgba(26, 52, 92, 0.349);
+  --clock-border: 1px solid rgba(13, 99, 92, 0.301);
+  --clock-hover: rgba(5, 104, 143, 0.377);
+  --remove-button: rgba(85, 29, 29, 0.158);
+  --remove-hover: rgba(151, 37, 37, 0.315);
+  --add-button:  rgba(25, 82, 50, 0.356);
+  --add-hover: rgba(28, 117, 68, 0.603);
+  --name-border: 1px solid rgba(0, 48, 119, 0.349);
+  --schedule-border: 1px solid  rgba(0, 128, 0, 0.151);
+  --name-hover: rgba(0, 48, 119, 0.158);
+  --schedule-hover: rgba(17, 235, 17, 0.041);
+  --calendar-border: 1px solid #999;
+}
+
+.hidden {
+  display: none;
+}
+
+body {
+  font-family: sans-serif, Arial;
+  margin: 0;
+  background-color: var(--background-color); /* Background color */
+  color: var(--text-color);
+  font-size: 16px;
+  display: flex; /* Use flexbox for centering */
+  flex-direction: column; /* Stack items vertically */
+  align-items: center; /* Center items horizontally */
+  overflow-x: hidden; /* Prevent horizontal scrolling on the body */
+  padding-bottom: 1em;
+}
+
+.form-wrapper, .table-wrapper {
+  display: inline-block; /* Allow the wrappers to size based on their content */
+  max-width: 98%; /* Ensure it does not exceed the viewport width */
+  width: auto; /* Make it take only the space it needs */
+  margin: 0; /* Remove margins for better centering */
+}
+
+.top-title {
+  width: 100%;
+  font-weight: lighter;
+  margin-left: 2em;
+  margin-top: 2.5em;
+  text-align: left;
+}
+
+h2 {
+  font-size: 1.5em;
+  font-weight: normal;
+  margin-left: 0.4em;
+  margin-bottom: 0.5em;
+  text-align: left; /* Explicitly align text to the left */
+
+  display: flex;  /* Use flexbox */
+  justify-content: space-between;  /* Align title to the left and info button to the right */
+  align-items: center;  /* Align vertically */
+  width: 100%;  /* Ensure it takes up the full width */
+}
+
+.table-container {
+  display: block; /* Keep it as a block element to manage scrolling */
+  overflow-x: auto; /* Enable horizontal scrolling */
+  border-radius: 1rem;
+  background-color: var(--card-background);
+  width: 100%; /* Make the container take full width */
+  box-sizing: border-box; /* Include padding in width calculations */
+}
+
+table {
+  width: 100%; /* Let the table take as much width as needed */
+  min-width: 4em; /* Ensure the table has a minimum width */
+  table-layout: auto; /* Allow columns to adjust based on content */
+  border-spacing: 0;
+  border-collapse: collapse;
+  background-color: var(--table-background);
+  margin: 0; /* Remove margin on the table */
+}
+
+tbody {
+  text-align: center;
+}
+
+th, td {
+  padding: 0.6rem; /* Padding for table cells */
+  min-width: 1rem; /* Optional: Prevent columns from becoming too narrow */
+  overflow: hidden; /* Prevent overflow of content */
+  white-space: normal; /* Enable text wrapping */
+  text-overflow: clip; /* Remove ellipsis */
+}
+
+/* Sticky styles for the first column cells */
+th:first-child, td:first-child {
+  position: sticky; /* Enable sticky positioning */
+  left: 0; /* Keep it at the left side */
+  z-index: 2; /* Ensure it stays on top of other cells */
+  text-align: right;
+}
+
+td:first-child {
+  background-color: var(--first-column); /* Ensure body cells have the same background as the table */
+  text-align: right;
+}
+
+th {
+  background-color: var(--table-header);
+}
+
+tr:hover td {
+  background-color: var(--input-hover);
+}
+
+tr:not(:first-child) td {
+  border-top: var(--table-border); /* Black border above each row except the first */
+}
+
+form {
+  border-radius: 1rem;
+  background-color: var(--card-background);
+  padding: 1em;
+  margin: 0 auto; /* Center horizontally */
+  max-width: 35rem;
+  width: 100%; /* Ensure the form takes full width */
+  box-sizing: border-box;
+}
+
+.name-row {
+  display: flex;
+  margin-bottom: 0.2em; /* Space between rows */
+  border: var(--name-border);
+  border-radius: 0.9em;
+  width: 100%; /* Ensure .name-row takes full width */
+  padding: 0.2em; /* Padding inside the name row */
+  gap: 0.2em;
+  box-sizing: border-box; /* Include padding in width calculation */
+}
+
+.name-row:hover {
+  background-color: var(--name-hover);
+}
+
+.schedule-row {
+  display: flex;
+  flex-wrap: wrap; /* Allow wrapping */
+  gap: 0.2rem;
+  padding: 0.2rem;
+  border-radius: 0.9rem;
+  margin-bottom: 0.5rem; /* Space between rows */
+  border: var(--schedule-border);
+}
+
+.schedule-row:hover {
+  background-color: var(--schedule-hover);
+}
+
+.date-row {
+  display: flex;
+  margin-bottom: 0.2rem; /* Space between rows */
+  width: 100%; /* Ensure .name-row takes full width */
+  padding: 0.2rem; /* Padding inside the name row */
+  gap: 0.2rem;
+  box-sizing: border-box; /* Include padding in width calculation */
+}
+
+.settings-row {
+  display: flex;
+  flex-wrap: wrap; /* Allow wrapping */
+  gap: 0.2rem;
+  border-radius: 0.9rem;
+  margin-bottom: 0.5rem; /* Space between rows */
+}
+
+.name-input {
+  flex: 1 1 70%; /* Allow to grow/shrink with a base width of 70% */
+}
+
+.count-input {
+  flex: 1 1 30%; /* Allow to shrink with a base width of 30% */
+}
+
+.usage-input {
+  flex: 1 1 15%; /* Allow to shrink with a base width of 30% */
+  min-width: 4rem;
+}
+
+.every-input {
+  flex: 1 1 15%; /* Allow to shrink with a base width of 30% */
+  min-width: 4rem;
+}
+
+.time-input {
+  flex: 1 1 20%; /* Adjust width as needed */
+  min-width: 9rem;
+}
+
+.start-input {
+  flex: 1 1 45%; /* Allow to shrink with a base width of 30% */
+  min-width: 16rem;
+}
+
+.min-input {
+  flex: 1 1 20%; /* Allow to shrink with a base width of 30% */
+  min-width: 6rem;
+}
+
+.send-input {
+  flex: 1 1 25%; /* Allow to shrink with a base width of 30% */
+  min-width: 8rem;
+}
+
+.repeat-input {
+  flex: 1 1 20%; /* Allow to shrink with a base width of 30% */
+}
+
+.schedule-day {
+  min-width: 4rem;
+}
+
+.schedule-month {
+  min-width: 4rem;
+}
+
+.schedule-year {
+  min-width: 6rem;
+}
+
+#day,
+#month {
+  min-width: 2em;
+}
+
+.form-group {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  background-color: var(--group-background);
+  height: 5rem;
+  border-radius: 0.7rem;
+  border: var(--group-border);
+  padding: 1rem 1rem 0.5rem; /* Top/Left/Right are 1em, Bottom is 1.5em */
+  overflow: hidden; /* Hide overflow content */
+}
+
+.form-row {
+  display: flex;
+  justify-content: space-between; /* Pushes the label to the left and the switch to the right */
+  align-items: center; /* Vertically aligns the label and switch */
+  background-color: var(--group-background);
+  height: 2rem;
+  border-radius: 0.7rem;
+  padding: 1rem; /* Top/Left/Right are 1em, Bottom is 1.5em */
+  margin-bottom: 0.2rem;
+}
+
+.full-row {
+  margin-bottom: 0.2rem;
+}
+
+.submit-row {
+  display: flex;
+  justify-content: right; /* Center the label and switch horizontally */
+  align-items: center; /* Vertically aligns the label and switch */
+  padding: 1rem; /* Top/Left/Right are 1em, Bottom is 1.5em */
+}
+
+.input-top {
+  font-size: 0.9rem;
+  font-weight: bold;
+  margin-bottom: 0.3rem;
+  pointer-events: none;
+  transition: 0.2s ease all;
+  text-align: left;
+}
+
+.input-bottom {
+  font-size: 0.6rem;
+  margin-top: 0.3rem;
+  margin-left: 0.3rem;
+  pointer-events: none;
+  transition: 0.2s ease all;
+  text-align: left;
+}
+
+.input-inside {
+  position: absolute;
+  top: 0.1rem; /* Adjust to control vertical overlap */
+  left: 0.9rem; /* Adjust horizontal alignment */
+  font-size: 0.6rem; /* Scale down label */
+  font-weight: lighter;
+}
+
+input {
+  border-radius: 0.2em;
+  outline: none;
+  color: var(--text-white);
+  background-color: var(--input-background);
+  font-weight: bold;
+  height: 3rem;
+  padding-left: 1rem;
+  font-size: 1rem;
+  box-sizing: border-box; /* Ensure padding is included in width */
+  width: 100%; /* Ensure inputs take full width of input group */
+  border: none;
+}
+
+.input-wrapper {
+  width: 100%; /* Ensure full width */
+  box-sizing: border-box; /* Include padding in width */
+  display: flex; /* Use flexbox to arrange children in a row */
+  align-items: center; /* Align items vertically center */
+  gap: 0.5rem; /* Add space between inputs */
+}
+
+.input-group {
+  position: relative;
+  flex: 1; /* Allow groups to grow and fill the space */
+  display: flex; /* Flexbox for input groups */
+  flex-direction: column; /* Stack label and input vertically */
+  justify-content: flex-start; /* Align items at the start */
+}
+
+/* Info button styling */
+.info-button {
+  position: relative;
+  cursor: pointer;
+}
+
+.info-button span {
+  display: flex; /* Ensure the span behaves like a block element for sizing */
+  justify-content: center; /* Center the text inside */
+  align-items: center; /* Vertically center the text */
+  font-size: 1.2rem;
+  width: 2rem; /* Set width and height to the same value for a circle */
+  height: 2rem;
+  background: var(--header-background);
+  color: white;
+  border-radius: 50%;
+  margin-right: 1.2rem;
+}
+
+/* Tooltip style */
+.tooltip {
+  position: absolute;
+  width: max-content;
+  max-width: 18rem;
+  padding: 0.5rem;
+  background-color: var(--group-background);
+  border: var(--light-border);
+  color: #fff;
+  border-radius: 0.3rem;
+  text-align: left;
+  font-size: 1rem;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.3s ease-out, visibility 0s linear 0.3s;
+  left: 50%; /* Center it horizontally relative to the button */
+  transform: translateX(-60%) translateX(-50%); /* Move it to the left of the button */
+  z-index: 2;
+}
+
+.info-button:hover .tooltip,
+.info-button:focus-within .tooltip {
+  visibility: visible;
+  opacity: 1;
+  transition: opacity 0.3s ease-in;
+}
+
+.info-button .tooltip:hover {
+  visibility: visible;
+  opacity: 1;
+  transition: opacity 0.3s ease-in;
+}
+
+
+
+
+
+
+/* Styling for BUTTONS */
+
+#showHistoryBtn,
+#showFutureBtn {
+  width: 70%;
+  height: 2rem;
+  background-color: var(--clock-button);
+  border: var(--clock-border);
+  border-radius: 0.5rem;
+  color: white;
+  display: block; /* Makes margin auto work */
+  margin: 0 auto; /* Centers horizontally */
+}
+
+#showHistoryBtn:hover,
+#showFutureBtn:hover {
+  background-color: var(--clock-hover);
+}
+
+.rotated-date {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  text-align: center;
+  vertical-align: middle;
+  min-width: 2rem;
+  max-width: 2rem;
+}
+
+.remove-button-wrapper {
+  width: 100%; /* Makes the wrapper full-width */
+  text-align: left; /* Aligns the button to the left within the row */
+}
+
+/* Styling for Remove button */
+.removeScheduleBtn {
+  background-color: var(--remove-button);
+  border: 1px solid rgba(187, 92, 38, 0.301);
+  border-radius: 0.5rem;
+  color: white;
+  height: 2.5rem;  
+  width: 30%;
+  margin-left: 1rem;
+}
+
+.removeScheduleBtn:hover,
+.deleteBtn:hover {
+  background-color: var(--remove-hover);
+}
+
+.schedule-actions {
+  width: 100%; /* Full width */
+  text-align: right; /* Aligns Add button to the right */
+  margin-top: 0.5rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+#addScheduleBtn,
+#sendEmailBtn,
+#goToConfigBtn {
+  background-color: var(--add-button);
+  border: 1px solid rgba(0, 140, 255, 0.301);
+  border-radius: 0.5rem;
+  color: white;
+  height: 2.5rem;  
+  width: 30%;
+  margin-right: 1rem;
+  min-width: 7rem;
+}
+
+#sendEmailBtn {
+  float: right; /* Aligns the button to the right */
+  margin-top: 0.4rem; /* Optional: Adds space between button and content above */
+  width: 9rem;
+}
+
+td .actions-group {
+  display: flex;
+  flex-wrap: wrap; /* Allows buttons to wrap to a new line if needed */
+  gap: 0.3rem; /* Adds space between buttons */
+}
+
+.updateBtn {
+  background-color: var(--add-button);
+  border: 1px solid rgba(0, 140, 255, 0.301);
+  border-radius: 0.5rem;
+  color: white;
+  height: 2.5rem;  
+  width: 4rem;
+}
+
+.deleteBtn {
+  background-color: var(--remove-button);
+  border: 1px solid rgba(187, 92, 38, 0.301);
+  border-radius: 0.5rem;
+  color: white;
+  width: 4rem;
+  height: 2.5rem;
+}
+
+#addScheduleBtn:hover,
+.updateBtn:hover,
+#sendEmailBtn:hover,
+#goToConfigBtn:hover {
+  background-color: var(--add-hover);
+}
+
+
+#goToConfigBtn {
+  display: flex;             /* Enable flexbox layout */
+  justify-content: center;   /* Center text horizontally */
+  margin: 1rem auto;         /* Horizontally center the button */
+  cursor: pointer;          /* Change cursor to pointer for better UX */
+  text-align: center;        /* Center text inside the button */
+  align-items: center;
+  text-decoration: none;     /* Remove the underline if it's a link */
+  line-height: 1.5;          /* Ensure proper line height for better vertical alignment */
+  padding: 0.6rem;
+}
+
+
+
+.submit-button {
+  width: 70%;
+  height: 4em;
+  background-color: var(--submit-button);
+  border: var(--submit-border);
+  border-radius: 0.5em;
+  color: white;
+  display: block; /* Makes margin auto work */
+  margin: 1em auto 0; /* Centers horizontally */
+}
+
+#submitSmtpButton {
+  background-color: var(--submit-button);
+  border: var(--submit-border);
+  border-radius: 0.5em;
+  color: white;
+  height: 2.5rem;  
+  width: 30%;
+  min-width: 7rem;
+  margin-right: 1rem;
+}
+
+.submit-button:hover,
+#submitSmtpButton:hover {
+  background-color: var(--submit-hover);
+}
+
+/* Calendar */
+
+/* Hide the .flatpickr-mobile input entirely */
+.flatpickr-mobile {
+  display: none !important;
+}
+
+/* Keep the calendar button visible */
+.calendar-icon {
+  display: inline-block;
+  height: 2rem;
+  width: 2rem;
+}
+
+/* Allow the button to be clicked directly on mobile by disabling pointer events on the input */
+.flatpickr-input.flatpickr-mobile {
+  pointer-events: none !important;
+}
+
+#inlineCalendar {
+  padding: 0rem !important;
+}
+
+.flatpickr-calendar {
+  background-color: transparent !important;
+  box-shadow: none !important;
+  height: auto; /* Allow height to adjust naturally */
+  border: var(--calendar-border);
+  border-radius: 0.65rem;
+}
+
+.flatpickr-calendar.inline {
+  border: var(--calendar-border); /* Set your desired border color */
+  margin-bottom: 0.6rem;
+  border-radius: 0.6rem;
+}
+
+#plannerForm {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.flatpickr-months {
+  border-top-left-radius: 0.6rem !important; /* Set the left bottom corner radius */
+  border-top-right-radius: 0.6rem !important; /* Set the right bottom corner radius */
+  overflow: hidden; /* Optional: Prevents overflow if needed */
+}
+
+.flatpickr-days {
+  border-bottom-left-radius: 0.6rem !important; /* Set the left bottom corner radius */
+  border-bottom-right-radius: 0.6rem !important; /* Set the right bottom corner radius */
+  overflow: hidden; /* Optional: Prevents overflow if needed */
+}
+
+.dayContainer,
+.flatpickr-weekdays,
+.flatpickr-weekday,
+.flatpickr-month,
+.flatpickr-monthDropdown-months {
+  background-color: var(--input-background) !important;
+}
+
+.numInputWrapper:hover,
+.time-input:hover,
+.form-group:focus,
+.form-group:hover {
+  background-color: var(--input-hover) !important;
+}
+
+/* Change SVG icon color on hover */
+.flatpickr-prev-month:hover svg, .flatpickr-next-month:hover svg {
+  fill: var(--input-hover) !important; /* Set hover color */
+}
+.arrowUp,
+.arrowDown {
+  display: none !important; 
+}
+
+input:focus,
+.form-group:focus-within,
+.time-input:focus-within {
+  border: var(--light-border);
+}
+
+/* Styling for Header and top title */
+
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%; /* Make the header span the full width */
+  z-index: 3; /* Ensure the header stays on top of other elements */
+  padding: 1em 0 1em 1em;
+  color: white;
+  gap: 2.5em;
+  display: flex;
+  align-items: center;
+  background-color: var(--header-background); /* Change this to your desired background color */
+}
+
+.menu-icon {
+  display: inline-block;
+  cursor: pointer;
+}
+
+.menu-icon span {
+  display: block;
+  width: 1.7em;  /* Adjust width for a wider menu */
+  height: 0.2em;  /* Thickness of the bars */
+  background-color: white;  /* Color of the bars */
+  margin: 0.3em 0;  /* Space between bars */
+}
+
+.logo {
+  font-size: 1.5em; /* Change font size as needed */
+  font-weight: bold;
+  text-decoration: none; /* Remove underline */
+  color: white; /* Change text color as needed */
+  margin-left: 0em;
+}
+
+.logo.non-bold {
+  font-weight: normal; /* Remove bold when showing the title */
+}
+
+.heading {
+  font-size: 0.8em; /* Adjust font size as needed */
+  margin-top: 0.5em;
+  margin-left: 5em;
+}
+
+/* Pill icons and clock table */
+
+.pill-icon {
+  display: inline-flex; /* Align icons in a row */
+  margin-right: 0.05em; /* Space between icons */
+}
+
+.pill {
+  width: 0.9rem; /* Width of the pill */
+  height: 2.4rem; /* Height of the pill */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Ensure the corners do not overflow */
+  border-radius: 0.6rem; /* Rounded corners */
+}
+
+/* Styles for med_one */
+.med_one .top-half {
+  fill: var(--med-top-half); /* Green for top half */
+}
+.med_one .bottom-half {
+  fill: var(--med-bottom-half); /* Lighter green for bottom half */
+}
+
+/* Styles for med_half */
+.med_half .top-half {
+  fill: var(--med-top-half); /* Yellow for top half */
+}
+.med_half .bottom-half {
+  fill: var(--table-background); /* Lighter yellow for bottom half */
+}
+
+/* Styles for med_one_past */
+.med_one_past .top-half {
+  fill: #454974; /* Red for top half when past */
+}
+.med_one_past .bottom-half {
+  fill:  #737473; /* Lighter red for bottom half when past */
+}
+
+/* Styles for med_half_past */
+.med_half_past .top-half {
+  fill: #454974; /* Orange for top half when past */
+}
+.med_half_past .bottom-half {
+  fill: var(--table-background); /* Lighter orange for bottom half when past */
+}
+
+/* Styles for med_zero */
+.med_zero .top-half {
+  fill: var(--med-top-zero); /* Gray for top half */
+}
+.med_zero .bottom-half {
+  fill: var(--med-bottom-zero);; /* Lighter gray for bottom half */
+}
+
+.red_row {
+  color: var(--med-top-zero);
+}
+
+.past_row {
+  text-decoration: line-through;
+  color: rgb(94, 94, 94);
+}
+
+/* Settings */
+
+/* Styling the switch container */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 3.75rem; /* 60px */
+  height: 2.125rem; /* 34px */
+}
+
+/* Hide the default checkbox */
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* The slider (the circle) */
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.4s;
+  border-radius: 2.125rem; /* 34px */
+}
+
+/* The slider circle */
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 1.625rem; /* 26px */
+  width: 1.625rem; /* 26px */
+  border-radius: 50%;
+  left: 0.25rem; /* 4px */
+  bottom: 0.25rem; /* 4px */
+  background-color: white;
+  transition: 0.4s;
+}
+
+/* When the checkbox is checked, move the circle to the right */
+input:checked + .slider {
+  background-color: #4CAF50; /* Green when enabled */
+}
+
+input:checked + .slider:before {
+  transform: translateX(1.625rem); /* 26px */
+}
+
+
+/* Side navigation styles */
+.sidenav {
+  height: 100%;
+  width: 0;
+  position: fixed;
+  z-index: 4;
+  top: 0;
+  left: 0;
+  background-color: rgb(26, 26, 26);
+  overflow-x: hidden;
+  padding-top: 5em;
+  transition: 0.1s;
+}
+
+.sidenav a {
+  padding: 0.6em 1em;
+  text-decoration: none;
+  font-size: 1.2em;
+  color: #818181;
+  display: flex;
+  align-items: center;
+  transition: 0.3s;
+}
+
+.nav-icon {
+  height: 1em;
+  margin-right: 0.5em;
+}
+
+.sidenav a:hover {
+  color: #f1f1f1;
+}
+
+.sidenav a.active {
+  background-color: #575757; /* Active link background color */
+  color: white; /* Active link text color */
+}
+
+.sidenav .closebtn {
+  position: absolute;
+  top: 0;
+  right: 0em;
+  font-size: 2em;
+}
+
+@media screen and (max-height: 450px) {
+  .sidenav { padding-top: 15px; }
+  .sidenav a { font-size: 1em; }
+}
+
+.logo-container {
+  display: flex; /* Use flexbox to align items */
+  flex-direction: column; /* Stack items vertically */
+  align-items: flex-start; /* Align items to the left */
+  margin: 1em 0em; /* Space above and below the logo */
+  padding-left: 0.5em; /* Optional: add padding to move content to the left */
+}
+
+.sidenav-logo {
+  width: 3em; /* Adjust size as needed */
+  height: auto; /* Maintain aspect ratio */
+  margin-bottom: 0; /* Space between the logo and title */
+  margin-left: 1.4em;
+}
+
+.sidenav-title {
+  color: rgb(28, 78, 128); /* Change text color to white or desired color */
+  font-size: 1em; /* Adjust font size as needed */
+  font-weight: bold; /* Make the text bold */
+}
+
+.sidenav-version {
+  font-size: 0.6em; /* Adjust font size as needed */
+  font-weight: bold; /* Make the text bold */
+  margin-left: 2.8em;
+}
