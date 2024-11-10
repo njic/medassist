@@ -1,7 +1,7 @@
 services:
   medassist:
     container_name: medassist
-    image: njic/medassist:latest
+    image: ghcr.io/njic/medassist:latest
     environment:
       - TZ=Etc/UTC
     ports:
