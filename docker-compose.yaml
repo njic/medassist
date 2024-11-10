@@ -1,0 +1,10 @@
+services:
+  medassist:
+    container_name: medassist
+    image: njic/medassist:latest
+    environment:
+      - TZ=Etc/UTC
+    ports:
+      - 3111:3111
+    volumes:
+      - /path/to/database/directory:/app/medassist
