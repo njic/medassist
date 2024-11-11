@@ -8,7 +8,7 @@
   </p>
 </div>
 
-MedAssist is a simple Node.js application made with love to help my partner manage their daily medications. It makes it easy to keep track of medication inventory and reorder on time by sending reminders. If you're unsure whether a dose was taken, just check the dashboard, and comparing the expected stock with the actual quantity can help confirm. For travel, MedAssist takes away the stress of travel by generating a quick list of all necessary medications for the time you’ll be away.
+MedAssist is a simple Node.js application made with love to help my partner manage their daily medications. It makes it easy to keep track of medication inventory and reorder on time by sending reminders. If you're unsure whether a dose was taken, just check the dashboard, and comparing the expected stock with the actual quantity can help confirm. For travel, MedAssist takes away the stress by generating a quick list of all necessary medications for the time you’ll be away.
 
 Keep in mind I’m not a professional programmer, coding is just a hobby for me. Working on this project is a way for me to unwind on stressful days and spend some time doing something I enjoy. I’d be happy if anyone else finds it useful, but I’ll likely keep it going either way!
 
