@@ -58,8 +58,9 @@ GUI is available on http://localhost:3111
 
 1. Download source code
 2. Extract content to your project directory (make sure it includes ```public``` folder and ```app.js```)
-3. Open directory in terminal and install dependencies by running ```npm install express sqlite3 node-cron nodemailer```
-4. Finally start the application with ```node app.js```
+3. Open app.js in text editor and replace (line 7) '/app/medassist/medication.db' with './medication.db'
+4. Open directory in terminal and install dependencies by running ```npm install express sqlite3 node-cron nodemailer```
+5. Finally start the application with ```node app.js```
 
 ## Demo
 
