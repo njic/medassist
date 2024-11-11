@@ -3,15 +3,11 @@ const sqlite3 = require('sqlite3').verbose();
 const app = express();
 const cron = require('node-cron');
 const nodemailer = require('nodemailer');
-
-const fs = require('fs');
-const dockerPath = '/app/medassist/medication.db';
-const localPath = './medication.db';
-const dbPath = fs.existsSync(dockerPath) ? dockerPath : localPath;
-const db = new sqlite3.Database(dbPath, sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
+// Replace '/app/medassist/medication.db' with './medication.db' for non docker (node.js) deployment
+const db = new sqlite3.Database('/app/medassist/medication.db', sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
     if (err) {
         console.error('Error opening database:', err.message);
-    }
+    } 
 });
 
 // Serve static files
