@@ -48,7 +48,7 @@ Dashboard provides preview of all medication and upcoming schedules:
   - Date: DD.MM. format
 
 <br>
-<img src="https://github.com/njic/medassist/blob/main/screenshots/scr_dashboard.png?raw=true" width="700">
+<img src="https://github.com/njic/medassist/blob/main/screenshots/scr_dashboard.png?raw=true" width="800">
 
 ### Config
 This is the place where user can add or update/delete medication:
@@ -77,10 +77,10 @@ This is the place where user can add or update/delete medication:
     - Delete Button (deletes medication from database)
 
 <br>
-<img src="https://github.com/njic/medassist/blob/main/screenshots/scr_config.png?raw=true" width="700">
+<img src="https://github.com/njic/medassist/blob/main/screenshots/scr_config.png?raw=true" width="800">
 
 ### Planner
-To prepare for upcoming period like when user is traveling
+Prepare for upcoming period like when traveling
 - select date range form
 - a list of medication needed for that period of time
   - Name: medication name
@@ -89,14 +89,33 @@ To prepare for upcoming period like when user is traveling
   - Send by e-mail Button (sends the table to email - must be configured in Settings)
 
 <br>
-<img src="https://github.com/njic/medassist/blob/main/screenshots/scr_planner.png?raw=true" width="700">
+<img src="https://github.com/njic/medassist/blob/main/screenshots/scr_planner.png?raw=true" width="800">
 
 ### Settings
-Settings
+Application settings: when submitting changes, blank fields will not overwrite values in database
+- Username: used for dashboard and e-mail notifications (default: User)
+- Configure e-mail notifications
+  - Enamble/Disable Toggle
+  - Min Days: set the minimum number of days left for medication that expires first to trigger notifications
+  - Send Time: time at e-mail will be sent
+  - Repeat: number of days between e-mails (to avoid too frequent e-mails)
+- Configure SMTP server
+  - SMTP Host
+  - SMTP Port
+  - SMTP Username
+  - SMTP Password
+  - Recipient Email: use multiple comma separated "," recipient e-mails
 
 <br>
-<img src="https://github.com/njic/medassist/blob/main/screenshots/scr_settings.png?raw=true" width="700">
+<img src="https://github.com/njic/medassist/blob/main/screenshots/scr_settings.png?raw=true" width="800">
 
+### More screenshots
+
+<img src="https://github.com/njic/medassist/blob/main/screenshots/scr_update.png?raw=true" width="800">
+<br>
+<img src="https://github.com/njic/medassist/blob/main/screenshots/scr_mob_dashboard.png?raw=true" width="800">
+<br>
+<img src="https://github.com/njic/medassist/blob/main/screenshots/scr_mob_schedules.png?raw=true" width="800">
 
 <div align="center">
   <h1></h1>
