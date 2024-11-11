@@ -2,6 +2,7 @@ services:
   medassist:
     container_name: medassist
     image: ghcr.io/njic/medassist:latest
+    restart: always
     environment:
       - TZ=Etc/UTC
     ports:
