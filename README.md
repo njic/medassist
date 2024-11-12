@@ -1,7 +1,7 @@
 <div align="center">
   <img src="https://github.com/njic/medassist/blob/main/public/icons/logo-pills.svg?raw=true" width="100" title="MedAssist">
   <h1>MedAssist</h1>
-  <p>self-hosted medication managgement software</p>
+  <p>self-hosted medication management software</p>
     <a href="https://volimandr.eu">Demo</a>
     ·
     <a href="https://github.com/njic/medassist">GitHub</a>
