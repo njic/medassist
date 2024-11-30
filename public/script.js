@@ -28,7 +28,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const year = String(date.getFullYear()).slice(-2);
         const hours = String(date.getHours()).padStart(2, '0');
         const minutes = String(date.getMinutes()).padStart(2, '0');
-        return `${day}.${month}.'${year} @${hours}:${minutes}`;
+        if (isNaN(day) || isNaN(month) || isNaN(year) || isNaN(hours) || isNaN(minutes)) {
+            return `∞`;
+        }
+        // Format valid date values
+        return `${String(day).padStart(2, '0')}.${String(month).padStart(2, '0')}.'${String(year).slice(-2)} @${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
     };
 
     // Function to convert 'YYYY-MM-DD HH:MM' to 'DD.MM.'YY @HH.MM'
@@ -93,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="input-wrapper">
                         <div class="input-group">
                             <label for="usage_${scheduleIndex}" class="input-inside">Meds</label>
-                            <input type="number" min="0.1" step="0.1" id="usage_${scheduleIndex}" name="usage" value="${defaultUsage}" required>
+                            <input type="number" min="0" step="0.1" id="usage_${scheduleIndex}" name="usage" value="${defaultUsage}" required>
                         </div>
                     </div>
                     <label id="usageLabel_${scheduleIndex}" class="input-bottom">Taking 1</label> <!-- Added ID here -->
@@ -286,7 +290,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     let value = parseFloat(input.value);
                     
                     // If the value is empty or equals 0, set it to 1
-                    if (input.value === '' || value === 0) {
+                    if (input.value === '') {
                         value = 1;
                     }
                 

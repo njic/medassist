@@ -200,6 +200,19 @@ function fetchAndCalculateMedications(callback) {
             let medicationCountExceeded = false;
 
             const clockList = [];
+
+            const allUsagesZero = usages.every(usage => usage === 0); // Check if all usages are 0
+
+            if (allUsagesZero) {
+                // Set infinite symbol for all-zero usage
+                return {
+                    ...med,
+                    orderBefore: "∞",
+                    daysLeft: "∞",
+                    medsLeft: med.medication_count,
+                    clockList: []
+                };
+            }
             
             while (!medicationCountExceeded) {
                 // Reset currentDateTime to the medication update date at the start of the while loop
@@ -209,6 +222,7 @@ function fetchAndCalculateMedications(callback) {
                 currentDateTime.setUTCDate(currentDateTime.getUTCDate() + days); // days starts from 0, so first iteration is day 0
 
                 for (let i = 0; i < usages.length; i++) {
+                    if (usages[i] === 0) continue; // Ignore schedules with usage = 0
                     // Use UTC methods to set hours and minutes on currentDateTime
                     let [startDate, startTime] = starts[i].split("T");
                     let [hours, minutes] = startTime.split(":").map(Number);
@@ -231,8 +245,6 @@ function fetchAndCalculateMedications(callback) {
                     if (currentDateTime < updateDateTime) {
                         continue; // Skip this entry as it occurs before the medication update
                     }
-
-
 
                     // Include the current usage in the list for day 0 and beyond
                     if (
