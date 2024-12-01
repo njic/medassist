@@ -3,8 +3,7 @@ const sqlite3 = require('sqlite3').verbose();
 const app = express();
 const cron = require('node-cron');
 const nodemailer = require('nodemailer');
-// Replace '/app/medassist/medication.db' with './medication.db' for non docker (node.js) deployment
-const db = new sqlite3.Database('./medication.db', sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
+const db = new sqlite3.Database('./database/medication.db', sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
     if (err) {
         console.error('Error opening database:', err.message);
     } 
@@ -1061,5 +1060,6 @@ app.get('/api/all-settings', (req, res) => {
 
 // Start the server on port
 app.listen(3111, () => { 
-    console.log('Server is running on http://localhost:3111');
+    const currentDate = new Date().toISOString();
+    console.log(`Server started at ${currentDate}`);
 });
