@@ -22,12 +22,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Function to convert 'YYYY-MM-DD HH:MM:SS' to 'DD.MM.'YY @HH:MM' in user's local time
     const formatDateTime = (isoDateString) => {
+
+        // Try to create a Date object from the input string
         const date = new Date(isoDateString);
+
+        // If the date is invalid (NaN), return the original string
+        if (isNaN(date)) {
+            return isoDateString;
+        }
+
+        // Otherwise, format the valid date
         const day = String(date.getDate()).padStart(2, '0');
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const year = String(date.getFullYear()).slice(-2);
         const hours = String(date.getHours()).padStart(2, '0');
         const minutes = String(date.getMinutes()).padStart(2, '0');
+
+        // Return the formatted date string
         return `${day}.${month}.'${year} @${hours}:${minutes}`;
     };
 
@@ -93,7 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="input-wrapper">
                         <div class="input-group">
                             <label for="usage_${scheduleIndex}" class="input-inside">Meds</label>
-                            <input type="number" min="0.1" step="0.1" id="usage_${scheduleIndex}" name="usage" value="${defaultUsage}" required>
+                            <input type="number" min="0" step="0.1" id="usage_${scheduleIndex}" name="usage" value="${defaultUsage}" required>
                         </div>
                     </div>
                     <label id="usageLabel_${scheduleIndex}" class="input-bottom">Taking 1</label> <!-- Added ID here -->
@@ -286,7 +297,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     let value = parseFloat(input.value);
                     
                     // If the value is empty or equals 0, set it to 1
-                    if (input.value === '' || value === 0) {
+                    if (input.value === '') {
                         value = 1;
                     }
                 
@@ -1028,7 +1039,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 const processedMedications = medications.map(med => {
                     const medsLeft = med.medsLeft;
                     const daysLeft = med.daysLeft;
-                    const orderBefore = med.orderBefore ? new Date(med.orderBefore) : null;
+                    // Check if orderBefore is a valid date string
+                    let orderBefore = null;
+                    if (med.orderBefore && !isNaN(new Date(med.orderBefore).getTime())) {
+                        // It's a valid date string
+                        orderBefore = new Date(med.orderBefore);
+                    } else {
+                        // Handle invalid or non-date values like "∞" or "1+ Year"
+                        orderBefore = med.orderBefore; // Keep it as a string (e.g., "∞")
+                    }
         
                     return {
                         name: med.medication_name,
@@ -1036,7 +1055,30 @@ document.addEventListener('DOMContentLoaded', () => {
                         daysLeft,
                         orderBefore
                     };
-                }).sort((a, b) => a.daysLeft - b.daysLeft);
+                }).sort((a, b) => {
+                    // Sort numbers normally
+                    if (typeof a.daysLeft === 'number' && typeof b.daysLeft === 'number') {
+                        return a.daysLeft - b.daysLeft;
+                    }
+                
+                    // Handle "1+ Year" and "∞" as special cases
+                    const customSort = (val) => {
+                        if (val === "365+") return 1;  // "1+ Year" should come after numbers
+                        if (val === "∞") return 2;         // "∞" should come last
+                        return 0;  // For numbers, stay in normal order
+                    };
+                
+                    // Compare based on custom sort logic
+                    const aSortValue = customSort(a.daysLeft);
+                    const bSortValue = customSort(b.daysLeft);
+                
+                    // If both are numbers or both are strings, proceed with normal sorting
+                    if (aSortValue === 0 && bSortValue === 0) {
+                        return a.daysLeft - b.daysLeft; // Numbers sorted normally
+                    }
+                
+                    return aSortValue - bSortValue; // Special handling for "1+ Year" and "∞"
+                });
         
                 // Populate the tbody with processed medications
                 processedMedications.forEach(item => {
@@ -1046,7 +1088,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         <td>${item.name}</td>
                         <td>${item.medsLeft}</td>
                         <td>${item.daysLeft}</td>
-                        <td>${item.orderBefore ? formatDateTime(item.orderBefore) : 'N/A'}</td>
+                        <td>${formatDateTime(item.orderBefore)}</td>
+
                     `;
         
                     tbody.appendChild(row);
@@ -1075,43 +1118,41 @@ document.addEventListener('DOMContentLoaded', () => {
         fetchOverviewTable();
 
         // CLOCK TABLE
-        // Variables to track the button states
-        let showHistory = false;
-        let showFuture = false;
-
-        // Function to fetch clock table
         const fetchClockTable = async () => {
             try {
-                const response = await fetch('/fetchConfig');
+                const response = await fetch('/fetchClockTable');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
                 const medications = await response.json();
-        
+
                 const clockTableContainer = document.getElementById('clockTable');
                 clockTableContainer.innerHTML = ''; // Clear any existing content
-        
+
                 // Create a new table element
                 const clockTable = document.createElement('table');
-        
+
                 // Create table body
                 const tbody = document.createElement('tbody');
-        
+
                 // Combine all clockList entries into one array
                 const combinedClockList = [];
-        
+
                 medications.forEach(med => {
-                    med.clockList.forEach((clock, index) => {
-                        const isLastEntry = index === med.clockList.length - 1;
-        
+                    med.clockList.forEach(clock => {
+                        // Directly push the usage from backend, whether it's 0 or any other value
                         combinedClockList.push({
-                            name: med.medication_name,
-                            usage: isLastEntry ? 'X' : clock.usage,
+                            name: clock.name,
+                            usage: clock.usage,  // Just use the usage value directly
                             time: new Date(clock.scheduledTime),
                         });
                     });
                 });
-        
+
                 // Sort combinedClockList by time
                 combinedClockList.sort((a, b) => a.time - b.time);
-        
+
                 const getIconSvg = (pillType) => `
                     <div class="pill-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" width="15" height="40" class="pill">
@@ -1121,7 +1162,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             </g>
                         </svg>
                     </div>`;
-        
+
                 const nowTime = new Date();
                 const currentDateTime = new Date();
                 const startOfToday = new Date(currentDateTime.setHours(0, 0, 0, 0));
@@ -1129,12 +1170,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 startOfTomorrow.setDate(startOfToday.getDate() + 1);
                 const endOfTomorrow = new Date(startOfTomorrow);
                 endOfTomorrow.setHours(23, 59, 59, 999);
-        
+
                 // Populate the tbody with combined clock list
                 combinedClockList.forEach((item) => {
                     const row = document.createElement('tr');
                     let usageContent = '';
-        
+
                     // Determine usage display
                     if (item.usage === 'X') {
                         row.classList.add('red_row');
@@ -1143,24 +1184,22 @@ document.addEventListener('DOMContentLoaded', () => {
                         const usageValue = parseFloat(item.usage);
                         const fullIconsCount = Math.floor(usageValue);
                         const hasHalfIcon = (usageValue - fullIconsCount) > 0;
-        
+
                         for (let i = 0; i < fullIconsCount; i++) {
                             usageContent += getIconSvg(item.time < nowTime ? 'med_one_past' : 'med_one');
                         }
-        
+
                         if (hasHalfIcon) {
                             usageContent += getIconSvg(item.time < nowTime ? 'med_half_past' : 'med_half');
                         }
                     }
-        
+
                     // Determine the content and class for the date cell
                     const dateContent = item.time >= startOfToday && item.time < startOfTomorrow ? 'Today' : formatClockDate(item.time);
                     const dateClass = item.time >= startOfToday && item.time < startOfTomorrow ? 'today rotated-date' : 'rotated-date';
                     const pastClass = item.time < nowTime ? 'past_row' : '';
-        
-                    // Hide rows by default except for today and tomorrow
-                    row.style.display = item.time > endOfTomorrow || item.time < startOfToday ? 'none' : '';
-        
+
+
                     // Construct the row with the date cell having conditional classes
                     row.innerHTML = `
                         <td class="${pastClass}">${formatClockTime(item.time)}</td>
@@ -1168,36 +1207,18 @@ document.addEventListener('DOMContentLoaded', () => {
                         <td class="${pastClass}">${item.name}</td>
                         <td class="${dateClass}">${dateContent}</td>
                     `;
-        
+
                     tbody.appendChild(row); // Append the row to the tbody
                 });
-        
-                // Add the "Show History" row at the top
-                const showHistoryRow = document.createElement('tr');
-                showHistoryRow.innerHTML = `
-                    <td colspan="4">
-                        <button id="showHistoryBtn">Show History</button>
-                    </td>
-                `;
-                tbody.prepend(showHistoryRow); // Add to the top of the tbody
-        
-                // Add the "Show Future" row at the bottom
-                const showFutureRow = document.createElement('tr');
-                showFutureRow.innerHTML = `
-                    <td colspan="4">
-                        <button id="showFutureBtn">Show Future</button>
-                    </td>
-                `;
-                tbody.appendChild(showFutureRow); // Add to the bottom of the tbody
-        
+
                 // Append tbody to the clock table
                 clockTable.appendChild(tbody);
-        
+
                 // Create a new div container
                 const clockTableWrapper = document.createElement('div');
                 clockTableWrapper.className = 'table-container'; // Add class for styling
                 clockTableWrapper.appendChild(clockTable); // Append the clock table to the wrapper
-        
+
                 // Append the wrapper to the clockTableContainer
                 clockTableContainer.appendChild(clockTableWrapper);
 
@@ -1206,77 +1227,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     clockTableContainer.classList.remove('hidden');
                     clockTitle.classList.remove('hidden');
                 }
-        
-                // Add event listeners for the buttons
-                document.getElementById('showHistoryBtn').addEventListener('click', () => {
-                    showHistory = !showHistory;
-                    document.getElementById('showHistoryBtn').textContent = showHistory ? 'Hide History' : 'Show History';
-                    toggleRows(combinedClockList);
-                });
-        
-                document.getElementById('showFutureBtn').addEventListener('click', () => {
-                    showFuture = !showFuture;
-                    document.getElementById('showFutureBtn').textContent = showFuture ? 'Hide Future' : 'Show Future';
-                    toggleRows(combinedClockList);
-                });
-        
+
             } catch (error) {
                 console.error('Error fetching clock table:', error);
             }
         };
 
-        // Function to toggle visibility of rows
-        const toggleRows = (combinedClockList) => {
-            const tbody = document.querySelector('#clockTable tbody');
-            const rows = tbody.getElementsByTagName('tr');
-
-            Array.from(rows).forEach((row, index) => {
-                // Skip the button rows
-                if (index === 0 || index === rows.length - 1) return; // Skip button rows
-
-                const item = combinedClockList[index - 1]; // Adjust for button rows
-
-                const currentDate = new Date();
-                const startOfToday = new Date(currentDate.setHours(0, 0, 0, 0));
-                const tomorrow = new Date();
-                tomorrow.setDate(currentDate.getDate() + 1); // Move to the next day
-                const endOfTomorrow = new Date(tomorrow.setHours(23, 59, 59, 999)); // Set time to 23:59:59.999
-
-                // Always hide rows older than 4 days before today
-                const pastLimit = new Date(currentDate);
-                pastLimit.setDate(currentDate.getDate() - 2);
-
-                // Always hide rows later than 5 days after today
-                const futureLimit = new Date(currentDate);
-                futureLimit.setDate(currentDate.getDate() + 4);
-
-                const isOlderMoreDays = new Date(currentDate);
-                isOlderMoreDays.setDate(currentDate.getDate() - (showHistory ? 2 : 0)); // Show extra days in the past
-
-                const isLaterMoreDays = new Date(currentDate);
-                isLaterMoreDays.setDate(currentDate.getDate() + (showFuture ? 4 : 0)); // Show extra days in the future
-
-                const isOlderThanNow = item.time < currentDate;
-                const isLaterThanTomorrow = item.time > endOfTomorrow;
-
-                const isOlderThanMoreDays = item.time < isOlderMoreDays;
-                const isLaterThanMoreDays = item.time > isLaterMoreDays;
-
-                const isOlderThanPastLimit = item.time < pastLimit;
-                const isLaterThanFutureLimit = item.time > futureLimit;
-
-                if (isOlderThanPastLimit || isLaterThanFutureLimit || 
-                    (isOlderThanNow && !showHistory && isOlderThanMoreDays) || 
-                    (isLaterThanTomorrow && !showFuture && isLaterThanMoreDays)) {
-                    row.style.display = 'none'; // Hide row by default
-                } else {
-                    row.style.display = ''; // Show row
-                }
-            });
-        };
-
-        // Call fetchClockTable to load the data
         fetchClockTable();
+
     }
 
     // Do this if DB is empty
