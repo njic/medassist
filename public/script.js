@@ -237,7 +237,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     let value = parseFloat(input.value);
                     
                     // If the value is empty or equals 0, set it to 1
-                    if (input.value === '' || value === 0) {
+                    if (input.value === '') {
                         value = 1;
                     }
                 
@@ -1572,6 +1572,246 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert('Failed to save settings.');
             });
         });
+
+        // Limit input for Username
+        document.querySelector("#username").addEventListener("input", function () {
+            let invalidChars = /[^a-zA-Z0-9 _.-]/g; // Allow only letters, numbers, spaces, hyphens, underscores, and periods
+            this.value = this.value.replace(invalidChars, ""); // Remove invalid characters
+
+            // Limit length to 30 characters
+            if (this.value.length > 30) {
+                this.value = this.value.substring(0, 30);
+            }
+        });
+
+        // Limit input for min_days_left
+        document.querySelectorAll("#min_days_left").forEach((input) => {
+            input.addEventListener("keydown", function (event) {
+                const charCode = event.which || event.keyCode;
+        
+                // Whitelist: Allow backspace (8), tab (9), left/right arrow (37, 39), delete (46), up/down arrows (38, 40)
+                const allowedKeys = [8, 9, 37, 39, 46, 38, 40];
+        
+                // Allow number keys from regular number row (48-57) and Numpad (96-105)
+                if ((charCode >= 48 && charCode <= 57) || (charCode >= 96 && charCode <= 105)) {
+                    return; // Allow number keys
+                }
+        
+                // Allow the key if it's in the allowed list
+                if (allowedKeys.includes(charCode)) {
+                    return; // Allow allowed keys to proceed
+                }
+        
+                // Block all other characters (anything not in the allowed list)
+                event.preventDefault();
+            });
+        
+            // Blur event to ensure the value is an integer (or fallback to 1 if empty)
+            input.addEventListener("blur", function () {
+                let value = parseInt(input.value);
+        
+                // If the value is empty or equals 0, set it to 1
+                if (input.value === '') {
+                    value = 1;
+                }
+        
+                if (!isNaN(value)) {
+                    // Ensure the value is at least 1
+                    if (value < 1) {
+                        value = 1;
+                    }
+        
+                    input.value = value; // Set the final value
+                    updateMinDaysLabel(value); // Update the label immediately after blur
+                }
+            });
+        
+            // Focus event to highlight the current value
+            input.addEventListener("focus", function () {
+                input.select(); // Highlight the entire value on focus
+            });
+        
+            // Update the label when the value changes
+            input.addEventListener("input", function () {
+                updateMinDaysLabel(input.value);
+            });
+        
+            // Function to update the minDaysLabel text dynamically
+            function updateMinDaysLabel(value) {
+                const minDaysLabel = document.getElementById('minDaysLabel');
+                minDaysLabel.textContent = `If Days Left ≤ ${value}`;
+            }
+        });        
+        
+        // Limit input for Time (hours and minutes)
+        document.querySelectorAll("#email_send_time_hours, #email_send_time_minutes").forEach((input) => {
+            // Focus event to highlight the current value
+            input.addEventListener("focus", function () {
+                input.select(); // Highlight the entire value on focus
+            });
+        
+            // Input event to update time and adjust day, month, year accordingly
+            input.addEventListener("input", function () {
+                let hours = parseInt(document.getElementById('email_send_time_hours').value, 10);
+                let minutes = parseInt(document.getElementById('email_send_time_minutes').value, 10);
+        
+                // Allow user to manually clear or reset
+                if (isNaN(hours)) hours = 0;
+                if (isNaN(minutes)) minutes = 0;
+        
+                // Handling for hours input
+                if (input.id === 'email_send_time_hours') {
+                    if (hours > 23) hours = 0;
+                    if (hours < 0) hours = 23;
+                    document.getElementById('email_send_time_hours').value = hours.toString().padStart(2, '0');
+                }
+        
+                // Handling for minutes input
+                if (input.id === 'email_send_time_minutes') {
+                    if (minutes > 59) {
+                        minutes = 0; // Reset minutes to 00
+                        hours = (hours + 1) % 24; // Increment hours, loop back to 0 if hours exceed 23
+                        document.getElementById('email_send_time_hours').value = hours.toString().padStart(2, '0'); // Update hours input
+                    }
+                    if (minutes < 0) {
+                        minutes = 59; // Reset minutes to 59
+                        hours = (hours - 1 + 24) % 24; // Decrement hours, loop back to 23 if hours fall below 0
+                        document.getElementById('email_send_time_hours').value = hours.toString().padStart(2, '0'); // Update hours input
+                    }
+        
+                    document.getElementById('email_send_time_minutes').value = minutes.toString().padStart(2, '0'); // Update minutes input
+                }
+        
+                // Update the time label dynamically
+                updateTimeLabel();
+            });
+        
+            // Keydown event for limiting keys
+            input.addEventListener("keydown", function (event) {
+                const charCode = event.which || event.keyCode;
+            
+                // Allow backspace (8), delete (46), left/right arrow (37, 39), tab (9), and numbers (48-57, 96-105)
+                if ([8, 46, 37, 39, 9].includes(charCode) || (charCode >= 48 && charCode <= 57) || (charCode >= 96 && charCode <= 105)) {
+                    return; // Allow navigation and valid number keys
+                }
+            
+                // Block invalid characters
+                event.preventDefault();
+            
+                let hours = parseInt(document.getElementById('email_send_time_hours').value, 10);
+                let minutes = parseInt(document.getElementById('email_send_time_minutes').value, 10);
+            
+                if (isNaN(hours)) hours = 0;
+                if (isNaN(minutes)) minutes = 0;
+            
+                // Handle arrow up and arrow down for minutes and hours
+                if (event.keyCode === 38 || event.keyCode === 40) { // Up (38) or Down (40)
+                    // Handle minute adjustment
+                    if (event.target.id === 'email_send_time_minutes') {
+                        if (event.keyCode === 38) { // Arrow up (increment minutes)
+                            minutes++;
+                            if (minutes > 59) {
+                                minutes = 0;
+                                hours = (hours + 1) % 24; // Increment hours if minutes exceed 59
+                            }
+                        } else if (event.keyCode === 40) { // Arrow down (decrement minutes)
+                            minutes--;
+                            if (minutes < 0) {
+                                minutes = 59;
+                                hours = (hours - 1 + 24) % 24; // Decrement hours if minutes fall below 0
+                            }
+                        }
+                        // Update minutes and hours inputs
+                        document.getElementById('email_send_time_minutes').value = minutes.toString().padStart(2, '0');
+                        document.getElementById('email_send_time_hours').value = hours.toString().padStart(2, '0');
+                    }
+            
+                    // Handle hour adjustment
+                    if (event.target.id === 'email_send_time_hours') {
+                        if (event.keyCode === 38) { // Arrow up (increment hours)
+                            hours = (hours + 1) % 24;
+                        } else if (event.keyCode === 40) { // Arrow down (decrement hours)
+                            hours = (hours - 1 + 24) % 24;
+                        }
+                        // Update the hours input
+                        document.getElementById('email_send_time_hours').value = hours.toString().padStart(2, '0');
+                    }
+            
+                    // After updating the inputs, update the label
+                    updateTimeLabel(); // Pass updated hours and minutes to update the label
+                }
+            });
+        
+            // Function to update the time label based on input values
+            function updateTimeLabel() {
+                const hours = document.getElementById('email_send_time_hours').value;
+                const minutes = document.getElementById('email_send_time_minutes').value;
+                const timeLabel = document.getElementById('emailSendTimeLabel'); // Adjust based on your HTML structure
+                if (timeLabel) {
+                    timeLabel.textContent = `Send @${hours}:${minutes}`;
+                }
+            }
+        });
+
+        // Limit input for email_delay_days
+        document.querySelectorAll("#email_delay_days").forEach((input) => {
+            input.addEventListener("keydown", function (event) {
+                const charCode = event.which || event.keyCode;
+        
+                // Whitelist: Allow backspace (8), tab (9), left/right arrow (37, 39), delete (46), up/down arrows (38, 40)
+                const allowedKeys = [8, 9, 37, 39, 46, 38, 40];
+        
+                // Allow number keys from regular number row (48-57) and Numpad (96-105)
+                if ((charCode >= 48 && charCode <= 57) || (charCode >= 96 && charCode <= 105)) {
+                    return; // Allow number keys
+                }
+        
+                // Allow the key if it's in the allowed list
+                if (allowedKeys.includes(charCode)) {
+                    return; // Allow allowed keys to proceed
+                }
+        
+                // Block all other characters (anything not in the allowed list)
+                event.preventDefault();
+            });
+        
+            // Blur event to ensure the value is at least 1 (or fallback to 1 if empty)
+            input.addEventListener("blur", function () {
+                let value = parseInt(input.value);
+        
+                // If the value is empty or equals 0, set it to 1
+                if (input.value === '') {
+                    value = 1;
+                }
+        
+                if (!isNaN(value)) {
+                    // Ensure the value is at least 1
+                    if (value < 1) {
+                        value = 1;
+                    }
+        
+                    input.value = value; // Set the final value
+                    updateEmailRepeatLabel(value); // Update the label immediately after blur
+                }
+            });
+        
+            // Focus event to highlight the current value
+            input.addEventListener("focus", function () {
+                input.select(); // Highlight the entire value on focus
+            });
+        
+            // Update the label when the value changes
+            input.addEventListener("input", function () {
+                updateEmailRepeatLabel(input.value);
+            });
+        
+            // Function to update the emailRepeatLabel text dynamically
+            function updateEmailRepeatLabel(value) {
+                const emailRepeatLabel = document.getElementById('emailRepeatLabel');
+                emailRepeatLabel.textContent = value === 1 ? 'Every Day' : `Every ${value} Days`;
+            }
+        });
+
     }
 
     // DO THIS FOR ALL PAGES (TO HIDE TITLE WHEN SCROLLING)
@@ -1591,7 +1831,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 });
-
 
 let startX = 0;  // Track the X coordinate where the swipe started
 let isSwiping = false;  // Track if the user is performing a swipe action

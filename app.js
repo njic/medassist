@@ -4,7 +4,7 @@ const app = express();
 const cron = require('node-cron');
 const nodemailer = require('nodemailer');
 // Replace '/app/medassist/medication.db' with './medication.db' for non docker (node.js) deployment
-const db = new sqlite3.Database('/app/medassist/medication.db', sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
+const db = new sqlite3.Database('./medication.db', sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
     if (err) {
         console.error('Error opening database:', err.message);
     } 
