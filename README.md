@@ -75,7 +75,7 @@ Application doesn't have login and I'm not sure what to expect security wise, bu
 Dashboard provides a preview of all medication and upcoming schedules:
 
 
-<img src="https://github.com/njic/medassist/blob/main/screenshots/scr_dashboard.png?raw=true" width="800">
+<img src="https://github.com/njic/medassist/blob/main/screenshots/scr_dash.png?raw=true" width="800">
 <br><br>
 
 - Reorder Reminder (visible only if inventory is low)
@@ -161,6 +161,9 @@ Application settings: when submitting changes, blank fields will not overwrite v
 <img src="https://github.com/njic/medassist/blob/main/screenshots/scr_mob_dashboard.png?raw=true" width="300">
 <br><br>
 <img src="https://github.com/njic/medassist/blob/main/screenshots/scr_mob_schedules.png?raw=true" width="300">
+<img src="https://github.com/njic/medassist/blob/main/screenshots/scr_planner_mail.png?raw=true" width="300">
+<img src="https://github.com/njic/medassist/blob/main/screenshots/scr_mail.png?raw=true" width="300">
+
 
 ## Backup
 Make sure to sve database file ```medication.db``` somewhere safe
