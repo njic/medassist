@@ -44,12 +44,12 @@ services:
     ports:
       - 3111:3111
     volumes:
-      - /path/to/database/directory:/app/medassist
+      - /path/to/database/directory:/app/database
 ```
 Alternatively user docker run command
 
 ```
-docker run -p 3111:3111 -v /path/to/database/directory:/app/medassist --restart always -e TZ=Etc/UTC medassist
+docker run -p 3111:3111 -v /path/to/database/directory:/app/database --restart always -e TZ=Etc/UTC medassist
 ```
 
 GUI is available on http://localhost:3111
@@ -58,13 +58,14 @@ GUI is available on http://localhost:3111
 
 1. Download source code
 2. Extract content to your project directory (make sure it includes ```public``` folder and ```app.js```)
-3. Open app.js in text editor and replace (line 7) ```'/app/medassist/medication.db'``` with ```'./medication.db'```
-4. Open directory in terminal and install dependencies by running ```npm install express sqlite3 node-cron nodemailer```
-5. Finally start the application with ```node app.js```
+3. Open directory in terminal and install dependencies by running ```npm install express sqlite3 node-cron nodemailer```
+4. Finally start the application with ```node app.js```
 
 ## Demo
 
 You can try application here: [Demo](https://volimandr.eu)
+
+Demo was not working for some time because the server was running too many things for that amount of RAM. I have reinstalled OS and its running again.
 
 Application doesn't have login and I'm not sure what to expect security wise, but that domain and server are not being used for anything else right now. It's running in docker container behind Nginx Proxy Manager. I might clear the databse from time to time, but feel free to play around.
 
@@ -74,7 +75,7 @@ Application doesn't have login and I'm not sure what to expect security wise, bu
 Dashboard provides a preview of all medication and upcoming schedules:
 
 
-<img src="https://github.com/njic/medassist/blob/main/screenshots/scr_dashboard.png?raw=true" width="800">
+<img src="https://github.com/njic/medassist/blob/main/screenshots/scr_dash.png?raw=true" width="800">
 <br><br>
 
 - Reorder Reminder (visible only if inventory is low)
@@ -160,6 +161,22 @@ Application settings: when submitting changes, blank fields will not overwrite v
 <img src="https://github.com/njic/medassist/blob/main/screenshots/scr_mob_dashboard.png?raw=true" width="300">
 <br><br>
 <img src="https://github.com/njic/medassist/blob/main/screenshots/scr_mob_schedules.png?raw=true" width="300">
+<img src="https://github.com/njic/medassist/blob/main/screenshots/scr_planner_mail.png?raw=true" width="300">
+<img src="https://github.com/njic/medassist/blob/main/screenshots/scr_mail.png?raw=true" width="300">
+
+
+## Backup
+Make sure to sve database file ```medication.db``` somewhere safe
+
+## Project Goals
+
+ - Add option for usage = 0 -> DONE
+ - Improve backend to avoid CPU/Memory issues -> DONE
+ - Add multiple date/time formats -> Incoming feature
+ - Add Login -> Incoming feature
+ - Add Repeating prescriptions -> Considering implementation as new feature, but not priority for now since you can use a simple workaround (just create additional entry with Medication Count until prescription has to be updated, name that Medication like "medication_name Prescription")
+ - Home Assistant support -> Possible in the future
+ - FHIR Support -> Possible in the future
 
 <div align="center">
   <h1></h1>

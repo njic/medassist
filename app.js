@@ -3,8 +3,7 @@ const sqlite3 = require('sqlite3').verbose();
 const app = express();
 const cron = require('node-cron');
 const nodemailer = require('nodemailer');
-// Replace '/app/medassist/medication.db' with './medication.db' for non docker (node.js) deployment
-const db = new sqlite3.Database('/app/medassist/medication.db', sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
+const db = new sqlite3.Database('./database/medication.db', sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
     if (err) {
         console.error('Error opening database:', err.message);
     } 
@@ -17,16 +16,26 @@ app.use(express.urlencoded({ extended: true }));
 
 // Function to convert 'YYYY-MM-DD HH:MM:SS' to 'DD.MM.'YY @HH:MM' in server's local time
 const formatLocalDateTime = (isoDateString) => {
+    // Try to create a Date object from the input string
     const date = new Date(isoDateString);
+
+    // Check if the date is invalid (NaN) and return the original string if so
+    if (isNaN(date)) {
+        return isoDateString;
+    }
+
+    // Otherwise, format the valid date
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const year = String(date.getFullYear()).slice(-2);
     const hours = String(date.getHours()).padStart(2, '0');
     const minutes = String(date.getMinutes()).padStart(2, '0');
+
+    // Return the formatted date string
     return `${day}.${month}.'${year} @${hours}:${minutes}`;
 };
 
-// Function to convert 'YYYY-MM-DD HH:MM:SS' to 'DD.MM.'YY @HH:MM' in server's local time
+// Function to convert 'YYYY-MM-DD HH:MM:SS' to 'DD.MM.'YY in server's local time
 const formatLocalDate = (isoDateString) => {
     const date = new Date(isoDateString);
     const day = String(date.getDate()).padStart(2, '0');
@@ -176,12 +185,13 @@ app.delete('/delete-medication/:name', (req, res) => {
     });
 });
 
-// Fetch config table
+// Generate config table
 function fetchAndCalculateMedications(callback) {
+    const maxdays = 365; // Maximum days threshold
     db.all(`SELECT * FROM list`, [], (err, rows) => {
         if (err) {
             console.error(err);
-            return res.status(500).json({ error: 'Database error' });
+            return callback(err, null); // Return error in callback
         }
 
         const medications = rows.map(med => {
@@ -191,103 +201,90 @@ function fetchAndCalculateMedications(callback) {
 
             let sumMedUsed = 0;
             const updateDateTime = new Date(med.medication_update);
-            let orderBefore = null; // Initialize as null to check against it later
+            let orderBefore = null;
             let medsUsed = 0;
             let nowDateTime = new Date();
-            const lastDateTime = new Date();
-            lastDateTime.setDate(lastDateTime.getDate() + 4); // Add 4 days to the current date
             let days = 0;
             let medicationCountExceeded = false;
 
-            const clockList = [];
-            
-            while (!medicationCountExceeded) {
-                // Reset currentDateTime to the medication update date at the start of the while loop
-                let currentDateTime = new Date(med.medication_update); // This is UTC time
+            const allUsagesZero = usages.every(usage => usage === 0);
 
-                // Increment days for this iteration, setting the correct date first
-                currentDateTime.setUTCDate(currentDateTime.getUTCDate() + days); // days starts from 0, so first iteration is day 0
+            if (allUsagesZero) {
+                return {
+                    ...med,
+                    orderBefore: "∞",
+                    daysLeft: "∞",
+                    medsLeft: med.medication_count,
+                };
+            }
+
+            while (!medicationCountExceeded) {
+                let currentDateTime = new Date(updateDateTime);
+                currentDateTime.setUTCDate(currentDateTime.getUTCDate() + days);
+
+                // Break the loop if currentDateTime exceeds maxdays from nowDateTime
+                if ((currentDateTime - nowDateTime) / (1000 * 60 * 60 * 24) > maxdays) {
+                    orderBefore = "1+ Year"; // Set both values here
+                    daysLeft = "365+";
+                    break;
+                }
 
                 for (let i = 0; i < usages.length; i++) {
-                    // Use UTC methods to set hours and minutes on currentDateTime
+                    if (usages[i] === 0) continue;
+
                     let [startDate, startTime] = starts[i].split("T");
                     let [hours, minutes] = startTime.split(":").map(Number);
+                    currentDateTime.setUTCHours(hours, minutes, 0, 0);
 
-                    // Set the UTC hours and minutes directly on currentDateTime
-                    currentDateTime.setUTCHours(hours, minutes, 0, 0); // Adjust the time to the current usage time
-
-                    // Calculate the timezone offset based on medication start time
-                    let medicationStartTime = new Date(starts[i]); // Create Date object for medication start
+                    let medicationStartTime = new Date(starts[i]);
                     let medicationStartOffset = medicationStartTime.getTimezoneOffset();
                     let currentOffset = currentDateTime.getTimezoneOffset();
 
-                    // If the offset has changed, it indicates a DST change
                     if (currentOffset !== medicationStartOffset) {
-                        // Calculate the timezone adjustment (in hours)
                         let timezoneOffset = (medicationStartOffset - currentOffset) / 60;
-                        currentDateTime.setUTCHours(currentDateTime.getUTCHours() - timezoneOffset); // Adjust UTC hours
+                        currentDateTime.setUTCHours(currentDateTime.getUTCHours() - timezoneOffset);
                     }
 
-                    if (currentDateTime < updateDateTime) {
-                        continue; // Skip this entry as it occurs before the medication update
-                    }
+                    if (currentDateTime < updateDateTime) continue;
 
-
-
-                    // Include the current usage in the list for day 0 and beyond
                     if (
-                        currentDateTime >= medicationStartTime && // Compare against medication start time
+                        currentDateTime >= medicationStartTime &&
                         (Math.round((currentDateTime - medicationStartTime) / (1000 * 60 * 60 * 24)) % everys[i] === 0)
                     ) {
-                        // Handle the sumMedUsed logic and break if the count is exceeded
                         if (sumMedUsed + usages[i] > med.medication_count) {
-                            // Add final row before exiting the loop
-                            clockList.push({
-                                name: med.medication_name,
-                                usage: usages[i],
-                                scheduledTime: new Date(currentDateTime) // Use the updated currentDateTime
-                            });
-
                             if (!orderBefore || currentDateTime < orderBefore) {
-                                orderBefore = new Date(currentDateTime); // Set orderBefore to the currentDateTime
+                                orderBefore = new Date(currentDateTime);
                             }
-
-                            sumMedUsed += usages[i];
                             medicationCountExceeded = true;
-                            break; // Exit the loop as we have exceeded medication count
+                            break;
                         }
 
-                        // Continue adding to clockList if within medication count
                         sumMedUsed += usages[i];
-                        usedNow = usages[i];
-
-                        clockList.push({
-                            name: med.medication_name,
-                            usage: usages[i],
-                            scheduledTime: new Date(currentDateTime) // Use the updated currentDateTime
-                        });
-
                         if (currentDateTime < nowDateTime) {
-                            medsUsed = sumMedUsed; // Track used medications if current time is in the past
+                            medsUsed = sumMedUsed;
                         }
                     }
                 }
 
-                // Increment days only after checking all usages for the current day
                 days++;
             }
-            
-            // Calculate meds left and days left until order is needed
+
             const medsLeft = med.medication_count - medsUsed;
-            const daysLeft = orderBefore ? Math.floor((new Date(orderBefore) - nowDateTime) / (1000 * 60 * 60 * 24)) : null; // Ensure orderBefore is defined
-            
+
+            // Final calculation for daysLeft
+            const finalDaysLeft = orderBefore === "1+ Year" 
+            ? "365+" 
+            : orderBefore === "∞" 
+                ? "∞" 
+                : orderBefore 
+                    ? Math.floor((new Date(orderBefore) - nowDateTime) / (1000 * 60 * 60 * 24)) 
+                    : null;
 
             return {
                 ...med,
                 orderBefore: orderBefore,
-                daysLeft: daysLeft,
+                daysLeft: finalDaysLeft,  // Use finalDaysLeft here
                 medsLeft: medsLeft,
-                clockList: clockList // Add clockList to the return object
             };
         });
 
@@ -302,6 +299,130 @@ app.get('/fetchConfig', (req, res) => {
             return res.status(500).json({ error: 'Database error' });
         }
         res.json(medications);
+    });
+});
+
+// Generate clockList
+function createClockTable(callback) {
+    db.all(`SELECT * FROM list`, [], async (err, rows) => {
+        if (err) {
+            console.error(err);
+            return callback(err);
+        }
+
+        let totalClockListLength = 0; // Initialize total length counter
+
+        const clockTablePromises = rows.map(async (med) => {
+            const usages = JSON.parse(med.medication_usage);
+            const everys = JSON.parse(med.medication_every);
+            const starts = JSON.parse(med.medication_start);
+
+            let sumMedUsed = 0;
+            const updateDateTime = new Date(med.medication_update);
+
+            // Define the oldest and newest days
+            const oldestDay = new Date();
+            oldestDay.setUTCDate(oldestDay.getUTCDate()); // Yesterday
+            oldestDay.setUTCHours(0, 0, 0, 0); // 00:00
+
+            const newestDay = new Date();
+            newestDay.setUTCDate(newestDay.getUTCDate() + 3); // In 3 days
+            newestDay.setUTCHours(0, 0, 0, 0); // 00:00 of the third day
+
+            const clockList = [];
+            let medicationCountExceeded = false;
+            let days = 0;
+
+            // Fetch and check orderBefore asynchronously
+            const calculatedMed = await new Promise((resolve, reject) => {
+                fetchAndCalculateMedications((err, medications) => {
+                    if (err) return reject(err);
+                    const medMatch = medications.find(m => m.medication_name === med.medication_name);
+                    resolve(medMatch || {}); // Ensure we resolve to an empty object if no match
+                });
+            });
+
+            const orderBefore = new Date(calculatedMed.orderBefore || 0);
+
+            while (!medicationCountExceeded) {
+                let currentDateTime = new Date(med.medication_update); // Start from the medication update date
+                currentDateTime.setUTCDate(currentDateTime.getUTCDate() + days); // Increment days for each iteration
+
+                if (currentDateTime > newestDay) {
+                    break; // Stop looping if the current date exceeds the newest day
+                }
+
+                for (let i = 0; i < usages.length; i++) {
+                    const [startDate, startTime] = starts[i].split("T");
+                    const [hours, minutes] = startTime.split(":").map(Number);
+
+                    currentDateTime.setUTCHours(hours, minutes, 0, 0); // Adjust time to match usage time
+                    const medicationStartTime = new Date(starts[i]); // Parse medication start time
+                    const medicationStartOffset = medicationStartTime.getTimezoneOffset();
+                    const currentOffset = currentDateTime.getTimezoneOffset();
+
+                    if (currentOffset !== medicationStartOffset) {
+                        const timezoneOffset = (medicationStartOffset - currentOffset) / 60;
+                        currentDateTime.setUTCHours(currentDateTime.getUTCHours() - timezoneOffset);
+                    }
+
+                    if (currentDateTime < oldestDay) {
+                        continue; // Skip times before the oldest day
+                    }
+
+                    // Only add to clockList if usage is greater than 0
+                    if (
+                        currentDateTime >= medicationStartTime &&
+                        (Math.round((currentDateTime - medicationStartTime) / (1000 * 60 * 60 * 24)) % everys[i] === 0)
+                    ) {
+                        if (usages[i] > 0) {  // Skip usage 0
+                            if (sumMedUsed + usages[i] > med.medication_count) {
+                                clockList.push({
+                                    name: med.medication_name,
+                                    usage: orderBefore <= currentDateTime ? 'X' : usages[i],
+                                    scheduledTime: new Date(currentDateTime)
+                                });
+
+                                medicationCountExceeded = true;
+                                break;
+                            }
+
+                            sumMedUsed += usages[i];
+                            clockList.push({
+                                name: med.medication_name,
+                                usage: orderBefore <= currentDateTime ? 'X' : usages[i],
+                                scheduledTime: new Date(currentDateTime)
+                            });
+
+                            // Check if the total length has reached 6 and break if so
+                            totalClockListLength += 1;
+                            if (totalClockListLength >= 12) {
+                                return { clockList }; // Return clockList up to this point
+                            }
+                        }
+                    }
+                }
+
+                days++; // Increment days after processing all usages for the current day
+            }
+
+            return { clockList };
+        });
+
+        const clockTable = await Promise.all(clockTablePromises);
+
+        callback(null, clockTable); // Callback with the processed clockTable
+    });
+}
+
+
+app.get('/fetchClockTable', (req, res) => {
+    createClockTable((err, clockTable) => {
+        if (err) {
+            console.error("Error fetching clock table:", err);
+            return res.status(500).json({ error: 'Database error' });
+        }
+        res.json(clockTable); // Send the clock table as JSON to the frontend
     });
 });
 
@@ -399,7 +520,9 @@ function fetchAndCalculateMedicationsByDateRange(startDate, endDate, callback) {
                 }
 
                 // Compare plannerEndDate with orderBefore and set plannerEnough
-                const plannerEnough = orderBefore && plannerEndDate < orderBefore;
+                const plannerEnough = 
+                    (orderBefore === "1+ Year" || orderBefore === "∞") || 
+                    (orderBefore && plannerEndDate < orderBefore);
 
                 return {
                     ...med,
@@ -437,6 +560,7 @@ function renderPlannerHtmlTable(medicationsWithPlannerData, medications, startDa
 
     // Add rows for each medication
     medicationsWithPlannerData.forEach(med => {
+        if (med.plannerUsage === 0) return; // Skip rows with Usage Needed = 0
         const enoughStyle = med.plannerEnough ? '' : 'style="background-color: #ffcccc;"'; // Light red background for "Not Enough!"
         tableHTML += `
             <tr ${enoughStyle}>
@@ -471,7 +595,26 @@ function renderPlannerHtmlTable(medicationsWithPlannerData, medications, startDa
     }
 
     // Sort medications by daysLeft (ascending)
-    medications.sort((a, b) => a.daysLeft - b.daysLeft);
+    medications.sort((a, b) => {
+        // Helper function for custom sorting
+        const customSort = (val) => {
+            if (val === "365+") return 1; // "365+" (1+ Year) should come after numbers
+            if (val === "∞") return 2;    // "∞" should come last
+            if (typeof val === "number") return 0; // Numbers are sorted normally
+            return -1; // Invalid or unknown cases come first
+        };
+    
+        const aSortValue = customSort(a.daysLeft);
+        const bSortValue = customSort(b.daysLeft);
+    
+        // If both values are numbers, sort numerically
+        if (aSortValue === 0 && bSortValue === 0) {
+            return a.daysLeft - b.daysLeft;
+        }
+    
+        // Otherwise, sort based on custom sort logic
+        return aSortValue - bSortValue;
+    });
 
     // Add Complete Medication Inventory section
     tableHTML += `
@@ -490,7 +633,10 @@ function renderPlannerHtmlTable(medicationsWithPlannerData, medications, startDa
 
     // Add rows for complete medication inventory
     medications.forEach(med => {
-        const lowStyle = (minDaysLeft <= med.daysLeft) ? '' : 'style="background-color: #ffcccc;"';
+        const lowStyle = 
+        (med.daysLeft !== "∞" && med.daysLeft !== "365+" && minDaysLeft >= med.daysLeft)
+            ? 'style="background-color: #ffcccc;"'
+            : '';
         tableHTML += `
             <tr ${lowStyle}>
                 <td style="text-align: right; padding: 5px 8px;">${med.medication_name}</td>
@@ -509,7 +655,7 @@ function renderPlannerHtmlTable(medicationsWithPlannerData, medications, startDa
             </tbody>
         </table>
         <br>
-        <div>Have an awesome trip!<br>Your MedAssist<br><br>Sent on: ${formattedServerTime}  (server time)</div>
+        <div>Wherever you go, whatever you do, MediAssist will be there for you!<br>&#10084; &#9992; &#128663; &#128646; &#127956; &#10052; &#127938; &#127757;<br>Have an awesome trip!<br>Your MedAssist<br><br>Sent on: ${formattedServerTime}  (server time)</div>
     `;
 
     // Return the complete HTML string
@@ -553,11 +699,17 @@ function sendPlannerEmail(startDate, endDate) {
                     },
                 });
 
+                const formattedStartDate = formatLocalDate(startDate); // Format the start date
+                const formattedEndDate = formatLocalDate(endDate); // Format the end date
+                const dayDifference = Math.round((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24)); // Difference in days
+                
                 // Define email options
                 const mailOptions = {
                     from: `"MedAssist" <${smtpConfig.smtp_user}>`,
                     to: smtpConfig.recipient_email,
-                    subject: 'Trip Planner',
+                    subject: dayDifference === 1 
+                        ? `Trip Planner - 1 day (${formattedStartDate})` 
+                        : `Trip Planner - ${dayDifference} days (from ${formattedStartDate} to ${formattedEndDate})`, // Updated subject line based on condition
                     html: pillTableHTML,
                 };
 
@@ -633,10 +785,13 @@ function startCronJob(smtpConfig) {
                                 },
                             });
 
+                            const now = new Date(); // Get the current date and time
+                            const formattedDate = formatLocalDate(now.toISOString()); // Format the current date
+
                             transporter.sendMail({
                                 from: `"MedAssist" <${smtpConfig.smtp_user}>`,
                                 to: smtpConfig.recipient_email,
-                                subject: 'Reorder Reminder',
+                                subject: `Reorder Reminder ${formattedDate}`,
                                 html: pillTableHTML, // Send the full table
                             }, (err, info) => {
                                 if (err) {
@@ -681,7 +836,26 @@ function renderHtmlTable(medications, smtpConfig) {
     }
 
     // Sort medications by daysLeft (ascending)
-    medications.sort((a, b) => a.daysLeft - b.daysLeft);
+    medications.sort((a, b) => {
+        // Helper function for custom sorting
+        const customSort = (val) => {
+            if (val === "365+") return 1; // "365+" (1+ Year) should come after numbers
+            if (val === "∞") return 2;    // "∞" should come last
+            if (typeof val === "number") return 0; // Numbers are sorted normally
+            return -1; // Invalid or unknown cases come first
+        };
+
+        const aSortValue = customSort(a.daysLeft);
+        const bSortValue = customSort(b.daysLeft);
+
+        // If both values are numbers, sort numerically
+        if (aSortValue === 0 && bSortValue === 0) {
+            return a.daysLeft - b.daysLeft;
+        }
+
+        // Otherwise, sort based on custom sort logic
+        return aSortValue - bSortValue;
+    });
 
     // Add Complete Medication Inventory section
     tableHTML += `
@@ -700,7 +874,10 @@ function renderHtmlTable(medications, smtpConfig) {
 
     // Add rows for complete medication inventory
     medications.forEach(med => {
-        const lowStyle = (minDaysLeft <= med.daysLeft) ? '' : 'style="background-color: #ffcccc;"';
+        const lowStyle = 
+            (med.daysLeft !== "∞" && med.daysLeft !== "365+" && minDaysLeft >= med.daysLeft)
+                ? 'style="background-color: #ffcccc;"'
+                : '';
         tableHTML += `
             <tr ${lowStyle}>
                 <td style="text-align: right; padding: 5px 8px;">${med.medication_name}</td>
@@ -719,7 +896,7 @@ function renderHtmlTable(medications, smtpConfig) {
             </tbody>
         </table>
         <br>
-        <div>Enjoy your drugs!<br>Your MedAssist<br><br>Sent on: ${formattedServerTime}  (server time)</div>
+        <div>Wherever you go, whatever you do, MediAssist will be there for you!<br>&#10084; &#128137; &#129465; &#128646; &#127956; &#10052; &#127938; &#127757;<br>Enjoy your drugs!<br>Your MedAssist<br><br>Sent on: ${formattedServerTime}  (server time)</div>
     `;
 
     // Return the complete HTML string
@@ -883,5 +1060,6 @@ app.get('/api/all-settings', (req, res) => {
 
 // Start the server on port
 app.listen(3111, () => { 
-    console.log('Server is running on http://localhost:3111');
+    const currentDate = new Date().toISOString();
+    console.log(`Server started at ${currentDate}`);
 });

@@ -22,12 +22,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Function to convert 'YYYY-MM-DD HH:MM:SS' to 'DD.MM.'YY @HH:MM' in user's local time
     const formatDateTime = (isoDateString) => {
+
+        // Try to create a Date object from the input string
         const date = new Date(isoDateString);
+
+        // If the date is invalid (NaN), return the original string
+        if (isNaN(date)) {
+            return isoDateString;
+        }
+
+        // Otherwise, format the valid date
         const day = String(date.getDate()).padStart(2, '0');
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const year = String(date.getFullYear()).slice(-2);
         const hours = String(date.getHours()).padStart(2, '0');
         const minutes = String(date.getMinutes()).padStart(2, '0');
+
+        // Return the formatted date string
         return `${day}.${month}.'${year} @${hours}:${minutes}`;
     };
 
@@ -93,7 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="input-wrapper">
                         <div class="input-group">
                             <label for="usage_${scheduleIndex}" class="input-inside">Meds</label>
-                            <input type="number" step="0.1" id="usage_${scheduleIndex}" name="usage" value="${defaultUsage}" required>
+                            <input type="number" min="0" step="0.1" id="usage_${scheduleIndex}" name="usage" value="${defaultUsage}" required>
                         </div>
                     </div>
                     <label id="usageLabel_${scheduleIndex}" class="input-bottom">Taking 1</label> <!-- Added ID here -->
@@ -103,7 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="input-wrapper">
                         <div class="input-group">
                             <label for="every_${scheduleIndex}" class="input-inside">Days</label>
-                            <input type="number" id="every_${scheduleIndex}" name="every" value="${defaultEvery}" required>
+                            <input type="number" min="1" step="1" id="every_${scheduleIndex}" name="every" value="${defaultEvery}" required>
                         </div>
                     </div>
                     <label id="everyLabel_${scheduleIndex}" class="input-bottom">Every Day</label> <!-- Added ID here -->
@@ -113,12 +124,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="input-wrapper">
                         <div class="input-group">
                             <label for="hours_${scheduleIndex}" class="input-inside">HH</label>
-                            <input type="number" min="0" max="23" step="1" id="hours_${scheduleIndex}" name="hours" value="${defaultHours}" required>
+                            <input type="number" step="1" id="hours_${scheduleIndex}" name="hours" value="${defaultHours}" required>
                         </div>
                         <span>:</span>
                         <div class="input-group">
                             <label for="minutes_${scheduleIndex}" class="input-inside">MM</label>
-                            <input type="number" min="0" max="59" step="1" id="minutes_${scheduleIndex}" name="minutes" value="${defaultMinutes}" required>
+                            <input type="number" step="1" id="minutes_${scheduleIndex}" name="minutes" value="${defaultMinutes}" required>
                         </div>
                     </div>
                     <label id="timeLabel_${scheduleIndex}" class="input-bottom">@${defaultHours}:${defaultMinutes}</label>
@@ -128,12 +139,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="input-wrapper">
                         <div class="input-group">
                             <label for="day_${scheduleIndex}" class="input-inside">DD</label>
-                            <input type="number" min="1" max="31" step="1" id="day_${scheduleIndex}" name="day" class="schedule-day" value="${defaultDays}" placeholder="DD" required>
+                            <input type="number" step="1" id="day_${scheduleIndex}" name="day" class="schedule-day" value="${defaultDays}" placeholder="DD" required>
                         </div>
                         <span>.</span>
                         <div class="input-group">
                             <label for="month_${scheduleIndex}" class="input-inside">MM</label>
-                            <input type="number" min="1" max="12" step="1" id="month_${scheduleIndex}" name="month" class="schedule-month" value="${defaultMonths}" placeholder="MM" required>
+                            <input type="number" step="1" id="month_${scheduleIndex}" name="month" class="schedule-month" value="${defaultMonths}" placeholder="MM" required>
                         </div>
                         <span>.</span>
                         <div class="input-group">
@@ -156,130 +167,587 @@ document.addEventListener('DOMContentLoaded', () => {
             flatpickr(`#calendarButton_${scheduleIndex}`, { 
                 dateFormat: "d.m.Y",
                 defaultDate: new Date(defaultYears, defaultMonths - 1, defaultDays),
-                disableMobile: true,  // Disable the mobile input field
+                disableMobile: true,
                 onReady: function(selectedDates, dateStr, instance) {
-                  const button = instance._input; // Reference to the flatpickr input
-                  // Prevent default when the calendar button is clicked
-                  button.addEventListener('click', function(event) {
-                    event.preventDefault(); // Prevent the default action (form submission)
-                  });
+                    const button = instance._input;
+                    button.addEventListener('click', function(event) {
+                        event.preventDefault();
+                    });
                 },
                 onChange: function(selectedDates, dateStr) {
-                  if (dateStr) {
-                    const [day, month, year] = dateStr.split('.');
-                    const scheduleRow = this._input.closest('.schedule-row'); 
-              
-                    // Update input fields
-                    scheduleRow.querySelector('.schedule-day').value = day;
-                    scheduleRow.querySelector('.schedule-month').value = month;
-                    scheduleRow.querySelector('.schedule-year').value = year;
-
-                    updateStartLabel();
-                  }
+                    if (dateStr) {
+                        const [day, month, year] = dateStr.split('.');
+                        const scheduleRow = this._input.closest('.schedule-row');
+            
+                        const dayInput = scheduleRow.querySelector('.schedule-day');
+                        const monthInput = scheduleRow.querySelector('.schedule-month');
+                        const yearInput = scheduleRow.querySelector('.schedule-year');
+            
+                        // Update inputs
+                        dayInput.value = day;
+                        monthInput.value = month;
+                        yearInput.value = year;
+            
+                        // Call the shared updateDateLabel function
+                        updateDateLabel(dayInput, monthInput, yearInput);
+                    }
                 }
-              });
-        
-            // Attach change listeners for "Every", "Hours", and "Minutes" inputs
-            const usageInput = scheduleRow.querySelector(`input[name="usage"]`);
-            const everyInput = scheduleRow.querySelector(`input[name="every"]`);
-            const hoursInput = scheduleRow.querySelector(`input[name="hours"]`);
-            const minutesInput = scheduleRow.querySelector(`input[name="minutes"]`);
-            const dayInput = scheduleRow.querySelector(`input[name="day"]`);
-            const monthInput = scheduleRow.querySelector(`input[name="month"]`);
-            const yearInput = scheduleRow.querySelector(`input[name="year"]`);
-            let isStartModified = false; // Flag to check if start was modified
+            });
 
-            everyInput.addEventListener('change', updateStartDate);
-            hoursInput.addEventListener('change', updateStartDate);
-            minutesInput.addEventListener('change', updateStartDate);
-            dayInput.addEventListener('change', updateStartDate);
-            monthInput.addEventListener('change', updateStartDate);
-            yearInput.addEventListener('change', updateStartDate);
+            // Limit input for Name
+            document.querySelector("#name").addEventListener("input", function () {
+                let invalidChars = /[^a-zA-Z0-9 _.-]/g; // Allow only letters, numbers, spaces, hyphens, underscores, and periods
+                this.value = this.value.replace(invalidChars, ""); // Remove invalid characters
+            
+                // Limit length to 50 characters
+                if (this.value.length > 30) {
+                    this.value = this.value.substring(0, 30);
+                }
+            });
 
-            // Function to update the Start date based on Hours, Minutes, and Every
-            function updateStartDate() {
-                if (!isStartModified) { // Only update if Start hasn't been modified
-                    const hours = parseInt(hoursInput.value, 10) || 0; // Default to 0 if empty
-                    const minutes = parseInt(minutesInput.value, 10) || 0; // Default to 0 if empty
+            // Limit input for Count
+            document.querySelectorAll("#count").forEach((input) => {
+                input.addEventListener("keydown", function (event) {
+                    const charCode = event.which || event.keyCode;
+                
+                    // Whitelist: Allow backspace (8), tab (9), left/right arrow (37, 39), delete (46), period (190), up/down arros (38, 40)
+                    const allowedKeys = [8, 9, 37, 39, 46, 190, 38, 40];
+                
+                    // Allow number keys from regular number row (48-57) and Numpad (96-105)
+                    if ((charCode >= 48 && charCode <= 57) || (charCode >= 96 && charCode <= 105)) {
+                        return; // Allow number keys
+                    }
+                
+                    // Allow the key if it's in the allowed list
+                    if (allowedKeys.includes(charCode)) {
+                        // Special handling for dot (.)
+                        if (charCode === 190 && input.value.indexOf('.') !== -1) {
+                            event.preventDefault(); // Prevent additional dots
+                            return;
+                        }
+                        return; // Allow allowed keys to proceed
+                    }
+                
+                    // Block all other characters (anything not in the allowed list)
+                    event.preventDefault();
+                });
+            
+                // Blur event to round value to 1 decimal place if necessary
+                input.addEventListener("blur", function () {
+                    let value = parseFloat(input.value);
+                    
+                    // If the value is empty or equals 0, set it to 1
+                    if (input.value === '') {
+                        value = 1;
+                    }
+                
+                    if (!isNaN(value)) {
+                        // Check if the value has a decimal part
+                        if (input.value.indexOf('.') !== -1) {
+                            // Round to 1 decimal place if there's a decimal part
+                            input.value = value.toFixed(1);
+                        } else {
+                            // Otherwise, leave the whole number as it is
+                            input.value = value;
+                        }
+                    }
+                });
+            
+                // Focus event to highlight the current value
+                input.addEventListener("focus", function () {
+                    input.select(); // Highlight the entire value on focus
+                });
+            
+            });
 
-                    const day = parseInt(dayInput.value, 10);
-                    const month = parseInt(monthInput.value, 10) - 1; // Month is 0-indexed
-                    const year = parseInt(yearInput.value, 10);
+            // Limit input for Usage
+            document.querySelectorAll("input[id^='usage_']").forEach((input) => {
+                input.addEventListener("keydown", function (event) {
+                    const charCode = event.which || event.keyCode;
+                
+                    // Whitelist: Allow backspace (8), tab (9), left/right arrow (37, 39), delete (46), period (190), up/down arros (38, 40)
+                    const allowedKeys = [8, 9, 37, 39, 46, 190, 38, 40];
+                
+                    // Allow number keys from regular number row (48-57) and Numpad (96-105)
+                    if ((charCode >= 48 && charCode <= 57) || (charCode >= 96 && charCode <= 105)) {
+                        return; // Allow number keys
+                    }
+                
+                    // Allow the key if it's in the allowed list
+                    if (allowedKeys.includes(charCode)) {
+                        // Special handling for dot (.)
+                        if (charCode === 190 && input.value.indexOf('.') !== -1) {
+                            event.preventDefault(); // Prevent additional dots
+                            return;
+                        }
+                        return; // Allow allowed keys to proceed
+                    }
+                
+                    // Block all other characters (anything not in the allowed list)
+                    event.preventDefault();
+                });
 
-                    const now = new Date();
-                    const currentTime = now.getHours() * 60 + now.getMinutes(); // Current time in minutes
-                    const selectedTime = hours * 60 + minutes; // Selected time in minutes
+                // Input event to update label dynamically
+                input.addEventListener("input", function () {
+                    updateLabel(input); // Update label dynamically on input change
+                });
+            
+                // Blur event to round value to 1 decimal place if necessary
+                input.addEventListener("blur", function () {
+                    let value = parseFloat(input.value);
+                    
+                    // If the value is empty or equals 0, set it to 1
+                    if (input.value === '') {
+                        value = 1;
+                    }
+                
+                    if (!isNaN(value)) {
+                        // Check if the value has a decimal part
+                        if (input.value.indexOf('.') !== -1) {
+                            // Round to 1 decimal place if there's a decimal part
+                            input.value = value.toFixed(1);
+                        } else {
+                            // Otherwise, leave the whole number as it is
+                            input.value = value;
+                        }
+                    }
+                    updateLabel(input); // Update label after blur
+                });
+            
+                // Focus event to highlight the current value
+                input.addEventListener("focus", function () {
+                    input.select(); // Highlight the entire value on focus
+                });
+            
+                // Function to update the label based on input value
+                function updateLabel(input) {
+                    if (input.id.startsWith('usage_')) {
+                        const scheduleRow = input.closest('.schedule-row');
+                        const scheduleIndex = input.id.split('_')[1];
+                        const usageLabel = scheduleRow.querySelector(`#usageLabel_${scheduleIndex}`);
+                        if (usageLabel) {
+                            usageLabel.textContent = `Taking ${input.value || 0}`;
+                        }
+                    }
+                }
+            });
 
-                    let startDate = new Date();
+            // Limit input for Every
+            document.querySelectorAll("input[id^='every_']").forEach((input) => {
+                // Keydown event to restrict input and allow only valid numbers
+                input.addEventListener("keydown", function (event) {
+                    const charCode = event.which || event.keyCode;
 
-                    // Set the start date from the input values
-                    if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
-                        startDate.setFullYear(year, month, day);
+                    // Allow backspace (8), delete (46), left/right arrow (37, 39), tab (9), and numbers (48-57, 96-105)
+                    if ([8, 46, 37, 39, 9].includes(charCode) || (charCode >= 48 && charCode <= 57) || (charCode >= 96 && charCode <= 105)) {
+                        return; // Allow navigation and valid number keys
                     }
 
-                    if (selectedTime > currentTime) {
-                        // If time is greater than or equal to now, use today's date
-                        startDate = now;
-                    } else {
-                        // If time is less than now, add 'Every' days to today's date
-                        startDate = new Date(now);
-                        startDate.setDate(now.getDate() + 1);
+                    // If it's any other key, prevent the default action (which is typing)
+                    if (!([8, 46, 37, 39, 9].includes(charCode) || (charCode >= 48 && charCode <= 57) || (charCode >= 96 && charCode <= 105) || charCode === 38 || charCode === 40)) {
+                        event.preventDefault(); // Block invalid characters
                     }
-                    // Now, update the input fields to reflect the new start date
-                    dayInput.value = startDate.getDate().toString().padStart(2, '0');
-                    monthInput.value = (startDate.getMonth() + 1).toString().padStart(2, '0'); // Months are 0-indexed
-                    yearInput.value = startDate.getFullYear();
+                });
 
-                    updateStartLabel();
+                // Input event to update label dynamically
+                input.addEventListener("input", function () {
+                    updateLabel(input); // Update label dynamically on input change
+                });
+
+                // Blur event to ensure the value is a valid integer and adjust the label
+                input.addEventListener("blur", function () {
+                    let value = parseInt(input.value, 10); // Parse as integer
+                    if (isNaN(value) || value < 1) {
+                        input.value = 1; // Reset to 1 if invalid or less than 1
+                    }
+                    updateLabel(input); // Ensure the label matches the final value
+                });
+
+                // Focus event to highlight the current value
+                input.addEventListener("focus", function () {
+                    input.select(); // Highlight the entire value on focus
+                });
+
+                // Function to update the label based on the input value
+                function updateLabel(input) {
+                    const scheduleRow = input.closest('.schedule-row'); // Find the parent schedule row
+                    const scheduleIndex = input.id.split('_')[1]; // Extract the scheduleIndex from the input's id
+                    const everyLabel = scheduleRow.querySelector(`#everyLabel_${scheduleIndex}`); // Select the bottom label by id
+                    if (everyLabel) {
+                        everyLabel.textContent = input.value <= 1 ? 'Every Day' : `Every ${input.value || 1} Days`; // Update label dynamically
+                    }
                 }
+            });
+            
+            // Limit input for Time
+            document.querySelectorAll("input[id^='hours_'], input[id^='minutes_']").forEach((input) => {
+                const scheduleRow = input.closest('.schedule-row');
+                const hoursInput = scheduleRow.querySelector("input[id^='hours_']");
+                const minutesInput = scheduleRow.querySelector("input[id^='minutes_']");
+                const dayInput = scheduleRow.querySelector("input[id^='day_']");
+                const monthInput = scheduleRow.querySelector("input[id^='month_']");
+                const yearInput = scheduleRow.querySelector("input[id^='year_']");
+
+                // Focus event to highlight the current value
+                input.addEventListener("focus", function () {
+                    input.select(); // Highlight the entire value on focus
+                });
+
+                input.addEventListener("input", function () {
+                    let hours = parseInt(hoursInput.value, 10);
+                    let minutes = parseInt(minutesInput.value, 10);
+                
+                    // Allow user to manually clear or reset
+                    if (isNaN(hours)) hours = 0;
+                    if (isNaN(minutes)) minutes = 0;
+                
+                    // Handling for hours input
+                    if (input.id.startsWith('hours_')) {
+                        if (hours > 23) hours = 0;
+                        if (hours < 0) hours = 23;
+                        hoursInput.value = hours.toString().padStart(2, '0');
+                    }
+                
+                    // Handling for minutes input
+                    if (input.id.startsWith('minutes_')) {
+                        if (minutes > 59) {
+                            minutes = 0; // Reset minutes to 00
+                            hours = (hours + 1) % 24; // Increment hours, loop back to 0 if hours exceed 23
+                            hoursInput.value = hours.toString().padStart(2, '0'); // Update hours input
+                        }
+                        if (minutes < 0) {
+                            minutes = 59; // Reset minutes to 59
+                            hours = (hours - 1 + 24) % 24; // Decrement hours, loop back to 23 if hours fall below 0
+                            hoursInput.value = hours.toString().padStart(2, '0'); // Update hours input
+                        }
+                
+                        minutesInput.value = minutes.toString().padStart(2, '0'); // Update minutes input
+                    }
+                
+                    // Update the time label dynamically
+                    updateTimeLabel(hoursInput, minutesInput);
+                    adjustDateBasedOnTime(hoursInput, minutesInput, dayInput, monthInput, yearInput);
+                });
+                
+                
+
+                input.addEventListener("keydown", function (event) {
+                    const charCode = event.which || event.keyCode;
+                
+                    // Allow backspace (8), delete (46), left/right arrow (37, 39), tab (9), and numbers (48-57, 96-105)
+                    if ([8, 46, 37, 39, 9].includes(charCode) || (charCode >= 48 && charCode <= 57) || (charCode >= 96 && charCode <= 105)) {
+                        return; // Allow navigation and valid number keys
+                    }
+                
+                    // Block invalid characters
+                    event.preventDefault();
+                
+                    let hours = parseInt(hoursInput.value, 10);
+                    let minutes = parseInt(minutesInput.value, 10);
+                
+                    if (isNaN(hours)) hours = 0;
+                    if (isNaN(minutes)) minutes = 0;
+                
+                    // Handle arrow up and arrow down for minutes
+                    if (event.keyCode === 38 || event.keyCode === 40) {
+                        if (input.id.startsWith('minutes_')) {
+                            if (event.keyCode === 38) {
+                                minutes++;
+                                if (minutes > 59) {
+                                    minutes = 0;
+                                    hours = (hours + 1) % 24; // Increment hours, loop back to 0 if it goes over 23
+                                }
+                            } else if (event.keyCode === 40) {
+                                minutes--;
+                                if (minutes < 0) {
+                                    minutes = 59;
+                                    hours = (hours - 1 + 24) % 24; // Decrement hours, loop back to 23 if it goes below 0
+                                }
+                            }
+                        } else if (input.id.startsWith('hours_')) {
+                            if (event.keyCode === 38) {
+                                hours = (hours + 1) % 24; // Increment hour, loop back to 0 if it goes over 23
+                            } else if (event.keyCode === 40) {
+                                hours = (hours - 1 + 24) % 24; // Decrement hour, loop back to 23 if it goes below 0
+                            }
+                        }
+                
+                        // Update the inputs with formatted values
+                        minutesInput.value = minutes.toString().padStart(2, '0');
+                        hoursInput.value = hours.toString().padStart(2, '0');
+                
+                        // Update the time label dynamically
+                        updateTimeLabel(hoursInput, minutesInput);  // Update label
+                        adjustDateBasedOnTime(hoursInput, minutesInput, dayInput, monthInput, yearInput);
+                    }
+                });
+
+                function updateTimeLabel(hoursInput, minutesInput) {
+                    const timeLabel = hoursInput.closest('.schedule-row').querySelector(`#timeLabel_${hoursInput.id.split('_')[1]}`);
+                    if (timeLabel) {
+                        timeLabel.textContent = `@${hoursInput.value}:${minutesInput.value}`;
+                    }
+                }
+            });
+
+            // Limit input for Date
+            document.querySelectorAll("input[id^='day_'], input[id^='month_'], input[id^='year_']").forEach((input) => {
+                const scheduleRow = input.closest('.schedule-row');
+                const dayInput = scheduleRow.querySelector("input[id^='day_']");
+                const monthInput = scheduleRow.querySelector("input[id^='month_']");
+                const yearInput = scheduleRow.querySelector("input[id^='year_']");
+
+                // Focus event to highlight the current value
+                input.addEventListener("focus", function () {
+                    input.select(); // Highlight the entire value on focus
+                });
+
+                let lastValidYear = parseInt(yearInput.value, 10) || 2024; // Default to 2024 if not defined
+
+                // Function to validate if the date is valid
+                function isValidDate(day, month, year) {
+                    const maxDaysInMonth = getMaxDaysInMonth(month, year);
+                    return day >= 1 && day <= maxDaysInMonth;
+                }
+
+                // Input event for arrow buttons and manual changes
+                input.addEventListener("input", function () {
+                    let day = parseInt(dayInput.value, 10);
+                    let month = parseInt(monthInput.value, 10);
+                    let year = parseInt(yearInput.value, 10);
+
+                    if (isNaN(day)) day = 1;
+                    if (isNaN(month)) month = 1;
+                    if (isNaN(year)) year = 2024;
+
+                    const maxDaysInMonth = getMaxDaysInMonth(month, year);
+
+                    // Handle specific inputs
+                    if (input.id.startsWith('day_')) {
+                        if (day > maxDaysInMonth) {
+                            day = 1;
+                            month++;
+                            if (month > 12) {
+                                month = 1;
+                                year++;
+                            }
+                        } else if (day < 1) {
+                            month--;
+                            if (month < 1) {
+                                month = 12;
+                                year--;
+                            }
+                            day = getMaxDaysInMonth(month, year);
+                        }
+                    } else if (input.id.startsWith('month_')) {
+                        if (month > 12) {
+                            month = 1;
+                            year++;
+                        } else if (month < 1) {
+                            month = 12;
+                            year--;
+                        }
+                        if (day > getMaxDaysInMonth(month, year)) day = 1;
+                    } else if (input.id.startsWith('year_')) {
+                        // Ensure year stays within 4 digits
+                        if (year < 1 || year > 9999) {
+                            year = lastValidYear; // Reset to last valid year
+                        } else {
+                            lastValidYear = year; // Update last valid year
+                        }
+                        
+                        // Check if the day is valid for the new year
+                        if (!isValidDate(day, month, year)) {
+                            // Adjust date to the next valid day (e.g., change 29th Feb to 1st Mar)
+                            day = 1;
+                            month++;
+                            if (month > 12) {
+                                month = 1;
+                                year++;
+                            }
+                        }
+                    }
+
+                    // Update inputs with corrected values
+                    dayInput.value = day.toString().padStart(2, '0');
+                    monthInput.value = month.toString().padStart(2, '0');
+                    yearInput.value = year.toString().padStart(4, '0');
+
+                    updateDateLabel(dayInput, monthInput, yearInput);
+                });
+
+                // Keydown event for keyboard navigation (Arrow Up/Down)
+                input.addEventListener("keydown", function (event) {
+                    let day = parseInt(dayInput.value, 10);
+                    let month = parseInt(monthInput.value, 10);
+                    let year = parseInt(yearInput.value, 10);
+
+                    if (isNaN(day)) day = 1;
+                    if (isNaN(month)) month = 1;
+                    if (isNaN(year)) year = 2024;
+
+                    const maxDaysInMonth = getMaxDaysInMonth(month, year);
+
+                    // Arrow up (keyCode 38) - Increment value
+                    if (event.keyCode === 38) {
+                        if (input.id.startsWith('day_')) {
+                            day++;
+                            if (day > maxDaysInMonth) {
+                                day = 1;
+                                month++;
+                                if (month > 12) {
+                                    month = 1;
+                                    year++;
+                                }
+                            }
+                        } else if (input.id.startsWith('month_')) {
+                            month++;
+                            if (month > 12) {
+                                month = 1;
+                                year++;
+                            }
+                            if (day > getMaxDaysInMonth(month, year)) day = 1;
+                        } else if (input.id.startsWith('year_')) {
+                            year++;
+                            if (year > 9999) {
+                                year = lastValidYear; // Reset to last valid year if exceeds 9999
+                            }
+                        }
+
+                        // Validate the date after incrementing
+                        if (!isValidDate(day, month, year)) {
+                            day = 1;
+                            month++;
+                            if (month > 12) {
+                                month = 1;
+                                year++;
+                            }
+                        }
+
+                        event.preventDefault();
+                    }
+
+                    // Arrow down (keyCode 40) - Decrement value
+                    if (event.keyCode === 40) {
+                        if (input.id.startsWith('day_')) {
+                            day--;
+                            if (day < 1) {
+                                month--;
+                                if (month < 1) {
+                                    month = 12;
+                                    year--;
+                                }
+                                day = getMaxDaysInMonth(month, year);
+                            }
+                        } else if (input.id.startsWith('month_')) {
+                            month--;
+                            if (month < 1) {
+                                month = 12;
+                                year--;
+                            }
+                            if (day > getMaxDaysInMonth(month, year)) day = 1;
+                        } else if (input.id.startsWith('year_')) {
+                            year--;
+                            if (year < 1) year = lastValidYear;
+                        }
+
+                        // Validate the date after decrementing
+                        if (!isValidDate(day, month, year)) {
+                            day = getMaxDaysInMonth(month, year);
+                        }
+
+                        event.preventDefault();
+                    }
+
+                    // Update inputs with corrected values
+                    dayInput.value = day.toString().padStart(2, '0');
+                    monthInput.value = month.toString().padStart(2, '0');
+                    yearInput.value = year.toString().padStart(4, '0');
+
+                    updateDateLabel(dayInput, monthInput, yearInput);
+                });
+            });
+
+            function getMaxDaysInMonth(month, year) {
+                if (month === 2) return (year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0)) ? 29 : 28;
+                return [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month - 1];
+            }
+
+            // Track if date was changed manually
+            document.querySelectorAll("input[id^='day_'], input[id^='month_'], input[id^='year_']").forEach((input) => {
+                input.dataset.userChanged = "false"; // Initialize change tracker
+            
+                // Detect manual changes via typing or dropdown selection
+                input.addEventListener("change", () => {
+                    input.dataset.userChanged = "true";
+                });
+            
+                // Detect changes via arrow keys and typing
+                input.addEventListener("input", () => {
+                    input.dataset.userChanged = "true";
+                });
+            
+                // Detect keyboard arrow key adjustments
+                input.addEventListener("keydown", (event) => {
+                    if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+                        input.dataset.userChanged = "true";
+                    }
+                });
+            });
+
+            // Adjust Date based on Time
+            function adjustDateBasedOnTime(hoursInput, minutesInput, dayInput, monthInput, yearInput) {
+                // Skip adjustment if the user manually changed any date input
+                if (
+                    dayInput.dataset.userChanged === "true" ||
+                    monthInput.dataset.userChanged === "true" ||
+                    yearInput.dataset.userChanged === "true"
+                ) {
+                    return;
+                }
+
+                const now = new Date();
+                const currentTime = {
+                    hours: now.getHours(),
+                    minutes: now.getMinutes(),
+                    day: now.getDate(),
+                    month: now.getMonth() + 1, // Months are 0-indexed
+                    year: now.getFullYear(),
+                };
+
+                let selectedHours = parseInt(hoursInput.value, 10);
+                let selectedMinutes = parseInt(minutesInput.value, 10);
+
+                if (isNaN(selectedHours)) selectedHours = 0;
+                if (isNaN(selectedMinutes)) selectedMinutes = 0;
+
+                // Adjust the date based on the time
+                if (selectedHours > currentTime.hours || (selectedHours === currentTime.hours && selectedMinutes > currentTime.minutes)) {
+                    // Time is in the future, so we don't change the date
+                    dayInput.value = currentTime.day;
+                    monthInput.value = currentTime.month;
+                    yearInput.value = currentTime.year;
+                } else {
+                    // Time is in the past, adjust to the next day
+                    let nextDay = new Date(currentTime.year, currentTime.month - 1, currentTime.day + 1);
+
+                    dayInput.value = nextDay.getDate();
+                    monthInput.value = nextDay.getMonth() + 1; // Ensure month is 1-indexed
+                    yearInput.value = nextDay.getFullYear();
+                }
+                updateDateLabel(dayInput, monthInput, yearInput);
             }
 
             // Update bottom label
-            const usageLabel = scheduleRow.querySelector(`#usageLabel_${scheduleIndex}`);
-            const everyLabel = scheduleRow.querySelector(`#everyLabel_${scheduleIndex}`);
-            const timeLabel = scheduleRow.querySelector(`#timeLabel_${scheduleIndex}`);
-            const startLabel = scheduleRow.querySelector(`#startLabel_${scheduleIndex}`);
-
-            // Attach listeners for hour and minute inputs
-            hoursInput.addEventListener('change', updateTimeLabel);
-            minutesInput.addEventListener('change', updateTimeLabel);
-
-            // Attach listeners for day, month, and year inputs
-            dayInput.addEventListener('change', () => {
-                isStartModified = true; // Mark Start as modified
-                updateStartLabel(); // Call the function to update the label
-            });
-            monthInput.addEventListener('change', () => {
-                isStartModified = true; // Mark Start as modified
-                updateStartLabel(); // Call the function to update the label
-            });
-            yearInput.addEventListener('change', () => {
-                isStartModified = true; // Mark Start as modified
-                updateStartLabel(); // Call the function to update the label
-            });
-
-            // Update usage and every label
-            usageInput.addEventListener('input', () => {
-                usageLabel.textContent = `Taking ${usageInput.value}`;
-            });
-            everyInput.addEventListener('input', () => {
-                everyLabel.textContent = everyInput.value === '1' ? 'Every Day' : `Every ${everyInput.value} Days`;
-            });            
-
-            // Function to update time label
-            function updateTimeLabel() {
-                const hours = hoursInput.value.padStart(2, '0');
-                const minutes = minutesInput.value.padStart(2, '0');
-                timeLabel.textContent = `@ ${hours}:${minutes}`;
+            function updateDateLabel(dayInput, monthInput, yearInput) {
+                const dateLabel = dayInput.closest('.schedule-row').querySelector(`#startLabel_${dayInput.id.split('_')[1]}`);
+                if (dateLabel) {
+                    const day = dayInput.value.padStart(2, '0');
+                    const month = monthInput.value.padStart(2, '0');
+                    const year = yearInput.value.padStart(4, '0');
+                    dateLabel.textContent = `Starting from ${day}.${month}.${year}`;
+                }
             }
-
-            // Function to update start label
-            const updateStartLabel = () => {
-                const dayValue = dayInput.value.padStart(2, '0'); // Ensure two digits for day
-                const monthValue = monthInput.value.padStart(2, '0'); // Ensure two digits for month
-                const yearValue = yearInput.value; // Get the year value   
-                startLabel.textContent = `Starting from ${dayValue}.${monthValue}.${yearValue}`;
-            };
 
             // Attach remove button functionality
             scheduleRow.querySelector('.removeScheduleBtn').addEventListener('click', () => {
@@ -571,7 +1039,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 const processedMedications = medications.map(med => {
                     const medsLeft = med.medsLeft;
                     const daysLeft = med.daysLeft;
-                    const orderBefore = med.orderBefore ? new Date(med.orderBefore) : null;
+                    // Check if orderBefore is a valid date string
+                    let orderBefore = null;
+                    if (med.orderBefore && !isNaN(new Date(med.orderBefore).getTime())) {
+                        // It's a valid date string
+                        orderBefore = new Date(med.orderBefore);
+                    } else {
+                        // Handle invalid or non-date values like "∞" or "1+ Year"
+                        orderBefore = med.orderBefore; // Keep it as a string (e.g., "∞")
+                    }
         
                     return {
                         name: med.medication_name,
@@ -579,7 +1055,30 @@ document.addEventListener('DOMContentLoaded', () => {
                         daysLeft,
                         orderBefore
                     };
-                }).sort((a, b) => a.daysLeft - b.daysLeft);
+                }).sort((a, b) => {
+                    // Sort numbers normally
+                    if (typeof a.daysLeft === 'number' && typeof b.daysLeft === 'number') {
+                        return a.daysLeft - b.daysLeft;
+                    }
+                
+                    // Handle "1+ Year" and "∞" as special cases
+                    const customSort = (val) => {
+                        if (val === "365+") return 1;  // "1+ Year" should come after numbers
+                        if (val === "∞") return 2;         // "∞" should come last
+                        return 0;  // For numbers, stay in normal order
+                    };
+                
+                    // Compare based on custom sort logic
+                    const aSortValue = customSort(a.daysLeft);
+                    const bSortValue = customSort(b.daysLeft);
+                
+                    // If both are numbers or both are strings, proceed with normal sorting
+                    if (aSortValue === 0 && bSortValue === 0) {
+                        return a.daysLeft - b.daysLeft; // Numbers sorted normally
+                    }
+                
+                    return aSortValue - bSortValue; // Special handling for "1+ Year" and "∞"
+                });
         
                 // Populate the tbody with processed medications
                 processedMedications.forEach(item => {
@@ -589,7 +1088,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         <td>${item.name}</td>
                         <td>${item.medsLeft}</td>
                         <td>${item.daysLeft}</td>
-                        <td>${item.orderBefore ? formatDateTime(item.orderBefore) : 'N/A'}</td>
+                        <td>${formatDateTime(item.orderBefore)}</td>
+
                     `;
         
                     tbody.appendChild(row);
@@ -618,43 +1118,41 @@ document.addEventListener('DOMContentLoaded', () => {
         fetchOverviewTable();
 
         // CLOCK TABLE
-        // Variables to track the button states
-        let showHistory = false;
-        let showFuture = false;
-
-        // Function to fetch clock table
         const fetchClockTable = async () => {
             try {
-                const response = await fetch('/fetchConfig');
+                const response = await fetch('/fetchClockTable');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
                 const medications = await response.json();
-        
+
                 const clockTableContainer = document.getElementById('clockTable');
                 clockTableContainer.innerHTML = ''; // Clear any existing content
-        
+
                 // Create a new table element
                 const clockTable = document.createElement('table');
-        
+
                 // Create table body
                 const tbody = document.createElement('tbody');
-        
+
                 // Combine all clockList entries into one array
                 const combinedClockList = [];
-        
+
                 medications.forEach(med => {
-                    med.clockList.forEach((clock, index) => {
-                        const isLastEntry = index === med.clockList.length - 1;
-        
+                    med.clockList.forEach(clock => {
+                        // Directly push the usage from backend, whether it's 0 or any other value
                         combinedClockList.push({
-                            name: med.medication_name,
-                            usage: isLastEntry ? 'X' : clock.usage,
+                            name: clock.name,
+                            usage: clock.usage,  // Just use the usage value directly
                             time: new Date(clock.scheduledTime),
                         });
                     });
                 });
-        
+
                 // Sort combinedClockList by time
                 combinedClockList.sort((a, b) => a.time - b.time);
-        
+
                 const getIconSvg = (pillType) => `
                     <div class="pill-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" width="15" height="40" class="pill">
@@ -664,7 +1162,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             </g>
                         </svg>
                     </div>`;
-        
+
                 const nowTime = new Date();
                 const currentDateTime = new Date();
                 const startOfToday = new Date(currentDateTime.setHours(0, 0, 0, 0));
@@ -672,12 +1170,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 startOfTomorrow.setDate(startOfToday.getDate() + 1);
                 const endOfTomorrow = new Date(startOfTomorrow);
                 endOfTomorrow.setHours(23, 59, 59, 999);
-        
+
                 // Populate the tbody with combined clock list
                 combinedClockList.forEach((item) => {
                     const row = document.createElement('tr');
                     let usageContent = '';
-        
+
                     // Determine usage display
                     if (item.usage === 'X') {
                         row.classList.add('red_row');
@@ -686,24 +1184,22 @@ document.addEventListener('DOMContentLoaded', () => {
                         const usageValue = parseFloat(item.usage);
                         const fullIconsCount = Math.floor(usageValue);
                         const hasHalfIcon = (usageValue - fullIconsCount) > 0;
-        
+
                         for (let i = 0; i < fullIconsCount; i++) {
                             usageContent += getIconSvg(item.time < nowTime ? 'med_one_past' : 'med_one');
                         }
-        
+
                         if (hasHalfIcon) {
                             usageContent += getIconSvg(item.time < nowTime ? 'med_half_past' : 'med_half');
                         }
                     }
-        
+
                     // Determine the content and class for the date cell
                     const dateContent = item.time >= startOfToday && item.time < startOfTomorrow ? 'Today' : formatClockDate(item.time);
                     const dateClass = item.time >= startOfToday && item.time < startOfTomorrow ? 'today rotated-date' : 'rotated-date';
                     const pastClass = item.time < nowTime ? 'past_row' : '';
-        
-                    // Hide rows by default except for today and tomorrow
-                    row.style.display = item.time > endOfTomorrow || item.time < startOfToday ? 'none' : '';
-        
+
+
                     // Construct the row with the date cell having conditional classes
                     row.innerHTML = `
                         <td class="${pastClass}">${formatClockTime(item.time)}</td>
@@ -711,36 +1207,18 @@ document.addEventListener('DOMContentLoaded', () => {
                         <td class="${pastClass}">${item.name}</td>
                         <td class="${dateClass}">${dateContent}</td>
                     `;
-        
+
                     tbody.appendChild(row); // Append the row to the tbody
                 });
-        
-                // Add the "Show History" row at the top
-                const showHistoryRow = document.createElement('tr');
-                showHistoryRow.innerHTML = `
-                    <td colspan="4">
-                        <button id="showHistoryBtn">Show History</button>
-                    </td>
-                `;
-                tbody.prepend(showHistoryRow); // Add to the top of the tbody
-        
-                // Add the "Show Future" row at the bottom
-                const showFutureRow = document.createElement('tr');
-                showFutureRow.innerHTML = `
-                    <td colspan="4">
-                        <button id="showFutureBtn">Show Future</button>
-                    </td>
-                `;
-                tbody.appendChild(showFutureRow); // Add to the bottom of the tbody
-        
+
                 // Append tbody to the clock table
                 clockTable.appendChild(tbody);
-        
+
                 // Create a new div container
                 const clockTableWrapper = document.createElement('div');
                 clockTableWrapper.className = 'table-container'; // Add class for styling
                 clockTableWrapper.appendChild(clockTable); // Append the clock table to the wrapper
-        
+
                 // Append the wrapper to the clockTableContainer
                 clockTableContainer.appendChild(clockTableWrapper);
 
@@ -749,77 +1227,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     clockTableContainer.classList.remove('hidden');
                     clockTitle.classList.remove('hidden');
                 }
-        
-                // Add event listeners for the buttons
-                document.getElementById('showHistoryBtn').addEventListener('click', () => {
-                    showHistory = !showHistory;
-                    document.getElementById('showHistoryBtn').textContent = showHistory ? 'Hide History' : 'Show History';
-                    toggleRows(combinedClockList);
-                });
-        
-                document.getElementById('showFutureBtn').addEventListener('click', () => {
-                    showFuture = !showFuture;
-                    document.getElementById('showFutureBtn').textContent = showFuture ? 'Hide Future' : 'Show Future';
-                    toggleRows(combinedClockList);
-                });
-        
+
             } catch (error) {
                 console.error('Error fetching clock table:', error);
             }
         };
 
-        // Function to toggle visibility of rows
-        const toggleRows = (combinedClockList) => {
-            const tbody = document.querySelector('#clockTable tbody');
-            const rows = tbody.getElementsByTagName('tr');
-
-            Array.from(rows).forEach((row, index) => {
-                // Skip the button rows
-                if (index === 0 || index === rows.length - 1) return; // Skip button rows
-
-                const item = combinedClockList[index - 1]; // Adjust for button rows
-
-                const currentDate = new Date();
-                const startOfToday = new Date(currentDate.setHours(0, 0, 0, 0));
-                const tomorrow = new Date();
-                tomorrow.setDate(currentDate.getDate() + 1); // Move to the next day
-                const endOfTomorrow = new Date(tomorrow.setHours(23, 59, 59, 999)); // Set time to 23:59:59.999
-
-                // Always hide rows older than 4 days before today
-                const pastLimit = new Date(currentDate);
-                pastLimit.setDate(currentDate.getDate() - 2);
-
-                // Always hide rows later than 5 days after today
-                const futureLimit = new Date(currentDate);
-                futureLimit.setDate(currentDate.getDate() + 4);
-
-                const isOlderMoreDays = new Date(currentDate);
-                isOlderMoreDays.setDate(currentDate.getDate() - (showHistory ? 2 : 0)); // Show extra days in the past
-
-                const isLaterMoreDays = new Date(currentDate);
-                isLaterMoreDays.setDate(currentDate.getDate() + (showFuture ? 4 : 0)); // Show extra days in the future
-
-                const isOlderThanNow = item.time < currentDate;
-                const isLaterThanTomorrow = item.time > endOfTomorrow;
-
-                const isOlderThanMoreDays = item.time < isOlderMoreDays;
-                const isLaterThanMoreDays = item.time > isLaterMoreDays;
-
-                const isOlderThanPastLimit = item.time < pastLimit;
-                const isLaterThanFutureLimit = item.time > futureLimit;
-
-                if (isOlderThanPastLimit || isLaterThanFutureLimit || 
-                    (isOlderThanNow && !showHistory && isOlderThanMoreDays) || 
-                    (isLaterThanTomorrow && !showFuture && isLaterThanMoreDays)) {
-                    row.style.display = 'none'; // Hide row by default
-                } else {
-                    row.style.display = ''; // Show row
-                }
-            });
-        };
-
-        // Call fetchClockTable to load the data
         fetchClockTable();
+
     }
 
     // Do this if DB is empty
@@ -1157,6 +1572,246 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert('Failed to save settings.');
             });
         });
+
+        // Limit input for Username
+        document.querySelector("#username").addEventListener("input", function () {
+            let invalidChars = /[^a-zA-Z0-9 _.-]/g; // Allow only letters, numbers, spaces, hyphens, underscores, and periods
+            this.value = this.value.replace(invalidChars, ""); // Remove invalid characters
+
+            // Limit length to 30 characters
+            if (this.value.length > 30) {
+                this.value = this.value.substring(0, 30);
+            }
+        });
+
+        // Limit input for min_days_left
+        document.querySelectorAll("#min_days_left").forEach((input) => {
+            input.addEventListener("keydown", function (event) {
+                const charCode = event.which || event.keyCode;
+        
+                // Whitelist: Allow backspace (8), tab (9), left/right arrow (37, 39), delete (46), up/down arrows (38, 40)
+                const allowedKeys = [8, 9, 37, 39, 46, 38, 40];
+        
+                // Allow number keys from regular number row (48-57) and Numpad (96-105)
+                if ((charCode >= 48 && charCode <= 57) || (charCode >= 96 && charCode <= 105)) {
+                    return; // Allow number keys
+                }
+        
+                // Allow the key if it's in the allowed list
+                if (allowedKeys.includes(charCode)) {
+                    return; // Allow allowed keys to proceed
+                }
+        
+                // Block all other characters (anything not in the allowed list)
+                event.preventDefault();
+            });
+        
+            // Blur event to ensure the value is an integer (or fallback to 1 if empty)
+            input.addEventListener("blur", function () {
+                let value = parseInt(input.value);
+        
+                // If the value is empty or equals 0, set it to 1
+                if (input.value === '') {
+                    value = 1;
+                }
+        
+                if (!isNaN(value)) {
+                    // Ensure the value is at least 1
+                    if (value < 1) {
+                        value = 1;
+                    }
+        
+                    input.value = value; // Set the final value
+                    updateMinDaysLabel(value); // Update the label immediately after blur
+                }
+            });
+        
+            // Focus event to highlight the current value
+            input.addEventListener("focus", function () {
+                input.select(); // Highlight the entire value on focus
+            });
+        
+            // Update the label when the value changes
+            input.addEventListener("input", function () {
+                updateMinDaysLabel(input.value);
+            });
+        
+            // Function to update the minDaysLabel text dynamically
+            function updateMinDaysLabel(value) {
+                const minDaysLabel = document.getElementById('minDaysLabel');
+                minDaysLabel.textContent = `If Days Left ≤ ${value}`;
+            }
+        });        
+        
+        // Limit input for Time (hours and minutes)
+        document.querySelectorAll("#email_send_time_hours, #email_send_time_minutes").forEach((input) => {
+            // Focus event to highlight the current value
+            input.addEventListener("focus", function () {
+                input.select(); // Highlight the entire value on focus
+            });
+        
+            // Input event to update time and adjust day, month, year accordingly
+            input.addEventListener("input", function () {
+                let hours = parseInt(document.getElementById('email_send_time_hours').value, 10);
+                let minutes = parseInt(document.getElementById('email_send_time_minutes').value, 10);
+        
+                // Allow user to manually clear or reset
+                if (isNaN(hours)) hours = 0;
+                if (isNaN(minutes)) minutes = 0;
+        
+                // Handling for hours input
+                if (input.id === 'email_send_time_hours') {
+                    if (hours > 23) hours = 0;
+                    if (hours < 0) hours = 23;
+                    document.getElementById('email_send_time_hours').value = hours.toString().padStart(2, '0');
+                }
+        
+                // Handling for minutes input
+                if (input.id === 'email_send_time_minutes') {
+                    if (minutes > 59) {
+                        minutes = 0; // Reset minutes to 00
+                        hours = (hours + 1) % 24; // Increment hours, loop back to 0 if hours exceed 23
+                        document.getElementById('email_send_time_hours').value = hours.toString().padStart(2, '0'); // Update hours input
+                    }
+                    if (minutes < 0) {
+                        minutes = 59; // Reset minutes to 59
+                        hours = (hours - 1 + 24) % 24; // Decrement hours, loop back to 23 if hours fall below 0
+                        document.getElementById('email_send_time_hours').value = hours.toString().padStart(2, '0'); // Update hours input
+                    }
+        
+                    document.getElementById('email_send_time_minutes').value = minutes.toString().padStart(2, '0'); // Update minutes input
+                }
+        
+                // Update the time label dynamically
+                updateTimeLabel();
+            });
+        
+            // Keydown event for limiting keys
+            input.addEventListener("keydown", function (event) {
+                const charCode = event.which || event.keyCode;
+            
+                // Allow backspace (8), delete (46), left/right arrow (37, 39), tab (9), and numbers (48-57, 96-105)
+                if ([8, 46, 37, 39, 9].includes(charCode) || (charCode >= 48 && charCode <= 57) || (charCode >= 96 && charCode <= 105)) {
+                    return; // Allow navigation and valid number keys
+                }
+            
+                // Block invalid characters
+                event.preventDefault();
+            
+                let hours = parseInt(document.getElementById('email_send_time_hours').value, 10);
+                let minutes = parseInt(document.getElementById('email_send_time_minutes').value, 10);
+            
+                if (isNaN(hours)) hours = 0;
+                if (isNaN(minutes)) minutes = 0;
+            
+                // Handle arrow up and arrow down for minutes and hours
+                if (event.keyCode === 38 || event.keyCode === 40) { // Up (38) or Down (40)
+                    // Handle minute adjustment
+                    if (event.target.id === 'email_send_time_minutes') {
+                        if (event.keyCode === 38) { // Arrow up (increment minutes)
+                            minutes++;
+                            if (minutes > 59) {
+                                minutes = 0;
+                                hours = (hours + 1) % 24; // Increment hours if minutes exceed 59
+                            }
+                        } else if (event.keyCode === 40) { // Arrow down (decrement minutes)
+                            minutes--;
+                            if (minutes < 0) {
+                                minutes = 59;
+                                hours = (hours - 1 + 24) % 24; // Decrement hours if minutes fall below 0
+                            }
+                        }
+                        // Update minutes and hours inputs
+                        document.getElementById('email_send_time_minutes').value = minutes.toString().padStart(2, '0');
+                        document.getElementById('email_send_time_hours').value = hours.toString().padStart(2, '0');
+                    }
+            
+                    // Handle hour adjustment
+                    if (event.target.id === 'email_send_time_hours') {
+                        if (event.keyCode === 38) { // Arrow up (increment hours)
+                            hours = (hours + 1) % 24;
+                        } else if (event.keyCode === 40) { // Arrow down (decrement hours)
+                            hours = (hours - 1 + 24) % 24;
+                        }
+                        // Update the hours input
+                        document.getElementById('email_send_time_hours').value = hours.toString().padStart(2, '0');
+                    }
+            
+                    // After updating the inputs, update the label
+                    updateTimeLabel(); // Pass updated hours and minutes to update the label
+                }
+            });
+        
+            // Function to update the time label based on input values
+            function updateTimeLabel() {
+                const hours = document.getElementById('email_send_time_hours').value;
+                const minutes = document.getElementById('email_send_time_minutes').value;
+                const timeLabel = document.getElementById('emailSendTimeLabel'); // Adjust based on your HTML structure
+                if (timeLabel) {
+                    timeLabel.textContent = `Send @${hours}:${minutes}`;
+                }
+            }
+        });
+
+        // Limit input for email_delay_days
+        document.querySelectorAll("#email_delay_days").forEach((input) => {
+            input.addEventListener("keydown", function (event) {
+                const charCode = event.which || event.keyCode;
+        
+                // Whitelist: Allow backspace (8), tab (9), left/right arrow (37, 39), delete (46), up/down arrows (38, 40)
+                const allowedKeys = [8, 9, 37, 39, 46, 38, 40];
+        
+                // Allow number keys from regular number row (48-57) and Numpad (96-105)
+                if ((charCode >= 48 && charCode <= 57) || (charCode >= 96 && charCode <= 105)) {
+                    return; // Allow number keys
+                }
+        
+                // Allow the key if it's in the allowed list
+                if (allowedKeys.includes(charCode)) {
+                    return; // Allow allowed keys to proceed
+                }
+        
+                // Block all other characters (anything not in the allowed list)
+                event.preventDefault();
+            });
+        
+            // Blur event to ensure the value is at least 1 (or fallback to 1 if empty)
+            input.addEventListener("blur", function () {
+                let value = parseInt(input.value);
+        
+                // If the value is empty or equals 0, set it to 1
+                if (input.value === '') {
+                    value = 1;
+                }
+        
+                if (!isNaN(value)) {
+                    // Ensure the value is at least 1
+                    if (value < 1) {
+                        value = 1;
+                    }
+        
+                    input.value = value; // Set the final value
+                    updateEmailRepeatLabel(value); // Update the label immediately after blur
+                }
+            });
+        
+            // Focus event to highlight the current value
+            input.addEventListener("focus", function () {
+                input.select(); // Highlight the entire value on focus
+            });
+        
+            // Update the label when the value changes
+            input.addEventListener("input", function () {
+                updateEmailRepeatLabel(input.value);
+            });
+        
+            // Function to update the emailRepeatLabel text dynamically
+            function updateEmailRepeatLabel(value) {
+                const emailRepeatLabel = document.getElementById('emailRepeatLabel');
+                emailRepeatLabel.textContent = value === 1 ? 'Every Day' : `Every ${value} Days`;
+            }
+        });
+
     }
 
     // DO THIS FOR ALL PAGES (TO HIDE TITLE WHEN SCROLLING)
@@ -1176,7 +1831,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 });
-
 
 let startX = 0;  // Track the X coordinate where the swipe started
 let isSwiping = false;  // Track if the user is performing a swipe action

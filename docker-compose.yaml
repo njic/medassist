@@ -8,4 +8,4 @@ services:
     ports:
       - 3111:3111
     volumes:
-      - /path/to/database/directory:/app/medassist
+      - /path/to/database/directory:/app/database

@@ -1,6 +1,9 @@
 node_modules
 screenshots
-medication.db
+database/medication.db
 LICENSE
 README.md
 .gitignore
+npm-debug.log
+Dockerfile
+.dockerignore

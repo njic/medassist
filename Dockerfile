@@ -1,5 +1,19 @@
-# Use the official Node.js image as a base
-FROM node:16
+# Use a build argument for selecting the Node.js base image
+ARG TARGETARCH
+ARG TARGETVARIANT
+
+# Default to Alpine for amd64 and arm64
+FROM node:lts-alpine AS amd64
+FROM node:lts-alpine AS arm64
+
+# Use full Node.js image for armv7
+FROM node:lts AS armv7
+
+# Use the correct base image based on architecture
+FROM ${TARGETARCH}${TARGETVARIANT:+${TARGETVARIANT}} AS final
+
+# Set the environment to production
+ENV NODE_ENV=production
 
 # Set the working directory inside the container
 WORKDIR /app
@@ -7,13 +21,13 @@ WORKDIR /app
 # Copy package.json and package-lock.json into the working directory
 COPY package*.json ./
 
-# Install the dependencies inside the container
-RUN npm install
+# Install dependencies inside the container
+RUN npm install --production
 
-# Copy the rest of your application code into the container
+# Copy the rest of the application code
 COPY . .
 
-# Expose the port your app runs on (adjust if needed)
+# Expose the port your app runs on
 EXPOSE 3111
 
 # Define the command to start the app
