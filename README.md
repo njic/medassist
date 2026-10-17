@@ -12,7 +12,17 @@ MedAssist is a simple Node.js application made with love to help my partner mana
 
 Keep in mind I’m not a professional programmer, coding is just a hobby for me. Working on this project is a way for me to unwind on stressful days and spend some time doing something I enjoy. I’d be happy if anyone else finds it useful, but I’ll likely keep it going either way!
 
-### ⚠️ Disclamer 
+## NOTE TO ALL USERS:
+#### Hey everyone!
+
+#### I haven't abandoned MedAssist! I still use it every day and it means a lot to me. Work and life simply got busier than I expected, so I haven't had much time to keep developing it.
+#### I'm really glad to see people still using it, opening issues, and creating forks. I'd love to see the project continue, whether through one of those forks or with someone interested in helping maintain #### MedAssist. I believe an app like this should be available to everyone.
+
+#### I'll most likely get back to working on MedAssist at some point, but I can't really say when.
+
+#### Thanks to everyone who's been using and supporting it! ❤️
+
+## ⚠️ Disclamer 
 
 - Your health is your responsibility. Take it seriously and don’t rely on any app, especially not this one! I don't have a medical or programming degree, this app is made with more love than knowledge, it may have serious flaws.
 
